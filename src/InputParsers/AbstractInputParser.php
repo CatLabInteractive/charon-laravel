@@ -2,8 +2,6 @@
 
 namespace CatLab\Charon\Laravel\InputParsers;
 
-use CatLab\Charon\Interfaces\ResourceDefinition;
-use CatLab\Charon\Models\Identifier;
 use \Request;
 
 /**
@@ -23,12 +21,10 @@ abstract class AbstractInputParser
     }
 
     /**
-     * @param ResourceDefinition $resourceDefinition
-     * @param array $data
-     * @return Identifier
+     * @return bool|string
      */
-    protected function arrayToIdentifier(ResourceDefinition $resourceDefinition, array $data)
+    protected function getRawContent()
     {
-        return Identifier::fromArray($resourceDefinition, $data);
+        return Request::instance()->getContent();
     }
 }
