@@ -5,10 +5,10 @@ namespace CatLab\Charon\Laravel\InputParsers;
 use \Request;
 
 /**
- * Class AbstractInputParser
+ * Trait LaravelInputParser
  * @package CatLab\Charon\Laravel\InputParsers
  */
-abstract class AbstractInputParser
+trait LaravelInputParser
 {
     /**
      * @return mixed|string
