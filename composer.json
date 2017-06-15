@@ -21,4 +21,9 @@
         "catlabinteractive/charon": "^1.0",
         "catlabinteractive/base-laravel": "^0.1"
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Petstore\\": "tests/Petstore"
+        }
+    }
 }
