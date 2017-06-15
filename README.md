@@ -8,3 +8,7 @@ Charon is a PHP framework for building self documented RESTfull API's.
 Getting started
 ===============
 First take a look at https://github.com/CatLabInteractive/charon
+
+Documentation
+=============
+http://charon.catlab.eu/
