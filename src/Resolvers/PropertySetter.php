@@ -6,11 +6,15 @@ use CatLab\Charon\Collections\PropertyValueCollection;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Exceptions\InvalidPropertyException;
+use CatLab\Charon\Laravel\Database\Model;
+use CatLab\Charon\Laravel\PropertySetterException;
 use CatLab\Charon\Models\Properties\IdentifierField;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\Properties\ResourceField;
 use CatLab\Charon\Interfaces\PropertyResolver as PropertyResolverContract;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
@@ -64,19 +68,49 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      * @param $entity
      * @param $name
      * @param array $childEntities
-     * @param $setterParameters
-     * @throws InvalidPropertyException
+     * @param array $setterParameters
+     * @return mixed|void
+     * @throws PropertySetterException
      */
     protected function addChildrenToEntity($entity, $name, array $childEntities, $setterParameters = [])
     {
+        if ($entity instanceof Model) {
+            $entity->addChildrenToEntity($name, $childEntities, $setterParameters);
+            return;
+        }
+
         if (method_exists($entity, 'add'.ucfirst($name))) {
             array_unshift($setterParameters, $childEntities);
             return call_user_func_array(array($entity, 'add'.ucfirst($name)), $setterParameters);
         } else {
             foreach ($childEntities as $childEntity) {
-                $entity->$name()->attach($childEntity);
+                $relationship = call_user_func([ $entity, $name ]);
+
+                if ($relationship instanceof BelongsToMany) {
+                    $relationship->attach($childEntity);
+                } else {
+                    throw new PropertySetterException("Relationship of type " . get_class($relationship) . " is not " .
+                        "supported yet. Use " . Model::class . " instead.");
+                }
             }
         }
+    }
+
+    /**
+     * @param $entity
+     * @param $name
+     * @param array $childEntities
+     * @param $parameters
+     * @throws InvalidPropertyException
+     */
+    protected function editChildrenInEntity($entity, $name, array $childEntities, $parameters = [])
+    {
+        if ($entity instanceof Model) {
+            $entity->editChildrenInEntity($name, $childEntities, $parameters);
+            return;
+        }
+
+        return parent::editChildrenInEntity($entity, $name, $childEntities, $parameters);
     }
 
     /**
@@ -135,18 +169,31 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      * @param $entity
      * @param $name
      * @param array $childEntities
-     * @param $parameters
-     * @throws InvalidPropertyException
+     * @param array $parameters
+     * @throws PropertySetterException
      */
     protected function removeChildrenFromEntity($entity, $name, $childEntities, $parameters = [])
     {
+        if ($entity instanceof Model) {
+            $entity->removeChildrenFromEntity($name, $childEntities, $parameters);
+            return;
+        }
+
         // Check for add method
         if (method_exists($entity, 'remove'.ucfirst($name))) {
             array_unshift($parameters, $childEntities);
             call_user_func_array(array($entity, 'remove'.ucfirst($name)), $parameters);
         } else {
-            foreach ($childEntities as $childEntity) {
-                $entity->$name()->detach($childEntity);
+
+            $relationship = $entity->$name();
+
+            if ($relationship instanceof BelongsToMany) {
+                foreach ($childEntities as $childEntity) {
+                    $relationship->detach($childEntity);
+                }
+            } else {
+                throw new PropertySetterException("Relationship of type " . get_class($relationship) . " is not " .
+                    "supported yet. Use " . Model::class . " instead.");
             }
         }
     }

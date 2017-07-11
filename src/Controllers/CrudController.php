@@ -7,6 +7,7 @@ use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Exceptions\ResourceException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
+use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Models\ResourceResponse;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
@@ -107,7 +108,11 @@ trait CrudController
         $entity = $this->toEntity($inputResource, $writeContext);
 
         // Save the entity
-        $entity->save();
+        if ($entity instanceof Model) {
+            $entity->saveRecursively();
+        } else {
+            $entity->save();
+        }
 
         // Turn back into a resource
         return $this->createViewEntityResponse($entity);
@@ -134,7 +139,11 @@ trait CrudController
         $entity = $this->toEntity($inputResource, $writeContext, $entity);
 
         // Save the entity
-        $entity->save();
+        if ($entity instanceof Model) {
+            $entity->saveRecursively();
+        } else {
+            $entity->save();
+        }
 
         // Turn back into a resource
         return $this->createViewEntityResponse($entity);
