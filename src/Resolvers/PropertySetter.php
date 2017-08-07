@@ -31,7 +31,14 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      */
     protected function setChildInEntity($entity, $name, $value, $setterParameters = [])
     {
-        $entity->$name()->associate($value);
+        // Check for link method name.
+        $methodName = 'associate' . ucfirst($name);
+        if (method_exists($entity, $methodName)) {
+            array_unshift($setterParameters, $value);
+            call_user_func_array(array ($entity, $methodName), $setterParameters)
+        } else {
+            $entity->$name()->associate($value);
+        }
     }
 
     /**
@@ -42,7 +49,13 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      */
     protected function clearChildInEntity($entity, $name, $setterParameters = [])
     {
-        $entity->$name()->dissociate();
+        // Check for link method name.
+        $methodName = 'dissociate' . ucfirst($name);
+        if (method_exists($entity, $methodName)) {
+            call_user_func_array(array ($entity, $methodName), $setterParameters)
+        } else {
+            $entity->$name()->dissociate();
+        }
     }
 
     /**
