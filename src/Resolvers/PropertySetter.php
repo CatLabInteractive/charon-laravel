@@ -35,7 +35,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
         $methodName = 'associate' . ucfirst($name);
         if (method_exists($entity, $methodName)) {
             array_unshift($setterParameters, $value);
-            call_user_func_array(array ($entity, $methodName), $setterParameters)
+            call_user_func_array(array ($entity, $methodName), $setterParameters);
         } else {
             $entity->$name()->associate($value);
         }
@@ -52,7 +52,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
         // Check for link method name.
         $methodName = 'dissociate' . ucfirst($name);
         if (method_exists($entity, $methodName)) {
-            call_user_func_array(array ($entity, $methodName), $setterParameters)
+            call_user_func_array(array ($entity, $methodName), $setterParameters);
         } else {
             $entity->$name()->dissociate();
         }
