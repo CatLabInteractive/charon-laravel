@@ -260,7 +260,7 @@ trait ResourceController
     public function bodyToResources(Context $context, $resourceDefinition = null) : ResourceCollection
     {
         $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
-        return $this->resourceTransformer->fromInput($resourceDefinition, $context);
+        return $this->resourceTransformer->fromInput($resourceDefinition, $context, $this->getRequest());
     }
 
     /**
@@ -296,11 +296,15 @@ trait ResourceController
         $context = new \CatLab\Charon\Models\Context($action, $parameters);
 
         if ($toShow = \Request::input(ResourceTransformer::FIELDS_PARAMETER)) {
-            $context->showFields(array_map('trim', explode(',', $toShow)));
+            if (is_string($toShow)) {
+                $context->showFields(array_map('trim', explode(',', $toShow)));
+            }
         }
 
         if ($toExpand = \Request::input(ResourceTransformer::EXPAND_PARAMETER)) {
-            $context->expandFields(array_map('trim', explode(',', $toExpand)));
+            if (is_string($toExpand)) {
+                $context->expandFields(array_map('trim', explode(',', $toExpand)));
+            }
         }
 
         $context->setUrl(\Request::url());
@@ -468,5 +472,13 @@ trait ResourceController
         }
 
         return $data;
+    }
+
+    /**
+     * @return Request
+     */
+    protected function getRequest()
+    {
+        return Request::getInstance();
     }
 }

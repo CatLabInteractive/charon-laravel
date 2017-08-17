@@ -49,6 +49,11 @@ trait CrudController
     }
 
     /**
+     * @var Request
+     */
+    protected $request;
+
+    /**
      * OrganisationController constructor.
      */
     public function __construct()
@@ -66,6 +71,8 @@ trait CrudController
      */
     public function index(Request $request)
     {
+        $this->request = $request;
+
         $this->authorize(Action::INDEX, $this->getEntityClassName());
         $context = $this->getContext(Action::INDEX);
 
@@ -82,6 +89,8 @@ trait CrudController
      */
     public function view(Request $request)
     {
+        $this->request = $request;
+
         $entity = $this->findEntity($request);
         $this->authorize(Action::VIEW, $entity);
 
@@ -94,6 +103,8 @@ trait CrudController
      */
     public function store(Request $request)
     {
+        $this->request = $request;
+
         $this->authorize(Action::CREATE, $this->getEntityClassName());
 
         $writeContext = $this->getContext(Action::CREATE);
@@ -124,6 +135,8 @@ trait CrudController
      */
     public function edit(Request $request)
     {
+        $this->request = $request;
+
         $entity = $this->findEntity($request);
         $this->authorize(Action::EDIT, $entity);
 
@@ -155,6 +168,8 @@ trait CrudController
      */
     public function destroy(Request $request)
     {
+        $this->request = $request;
+
         $entity = $this->findEntity($request);
         $this->authorize('destroy', $entity);
 
@@ -224,5 +239,13 @@ trait CrudController
         } else {
             return 'id';
         }
+    }
+
+    /**
+     * @return Request
+     */
+    protected function getRequest()
+    {
+        return isset($this->request) ? $this->request : Request::getInstance();
     }
 }
