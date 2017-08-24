@@ -11,7 +11,6 @@ use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Models\ResourceResponse;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
-
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -73,10 +72,10 @@ trait CrudController
     {
         $this->request = $request;
 
-        $this->authorize(Action::INDEX, $this->getEntityClassName());
+        $this->authorizeCrudRequest(Action::INDEX);
         $context = $this->getContext(Action::INDEX);
 
-        $models = $this->getModels($this->callEntityMethod('query'), $context);
+        $models = $this->getModels($this->getIndexQuery($request), $context);
         $resources = $this->toResources($models, $context);
 
         return new ResourceResponse($resources, $context);
@@ -92,7 +91,7 @@ trait CrudController
         $this->request = $request;
 
         $entity = $this->findEntity($request);
-        $this->authorize(Action::VIEW, $entity);
+        $this->authorizeCrudRequest(Action::VIEW, $entity);
 
         return $this->createViewEntityResponse($entity);
     }
@@ -105,7 +104,7 @@ trait CrudController
     {
         $this->request = $request;
 
-        $this->authorize(Action::CREATE, $this->getEntityClassName());
+        $this->authorizeCrudRequest(Action::CREATE);
 
         $writeContext = $this->getContext(Action::CREATE);
         $inputResource = $this->bodyToResource($writeContext);
@@ -119,11 +118,7 @@ trait CrudController
         $entity = $this->toEntity($inputResource, $writeContext);
 
         // Save the entity
-        if ($entity instanceof Model) {
-            $entity->saveRecursively();
-        } else {
-            $entity->save();
-        }
+        $this->saveEntity($request, $entity);
 
         // Turn back into a resource
         return $this->createViewEntityResponse($entity);
@@ -138,7 +133,7 @@ trait CrudController
         $this->request = $request;
 
         $entity = $this->findEntity($request);
-        $this->authorize(Action::EDIT, $entity);
+        $this->authorizeCrudRequest(Action::EDIT, $entity);
 
         $writeContext = $this->getContext(Action::EDIT);
         $inputResource = $this->bodyToResource($writeContext);
@@ -171,7 +166,7 @@ trait CrudController
         $this->request = $request;
 
         $entity = $this->findEntity($request);
-        $this->authorize('destroy', $entity);
+        $this->authorizeCrudRequest(Action::DESTROY, $entity);
 
         $entity->delete();
 
@@ -203,24 +198,39 @@ trait CrudController
     }
 
     /**
+     * @param Request $request
+     * @return mixed
+     */
+    protected function getIndexQuery(Request $request)
+    {
+        return $this->callEntityMethod($request, 'query');
+    }
+
+    /**
      * Call a static method on the entity.
+     * @param Request $request
      * @param $method
      * @return mixed
      */
-    protected function callEntityMethod($method)
+    protected function callEntityMethod(Request $request, $method)
     {
         // We don't want to include the first argument.
         $args = func_get_args();
+        array_shift($args);
         array_shift($args);
 
         return call_user_func_array([ $this->getEntityClassName(), $method ], $args);
     }
 
+    /**
+     * @param Request $request
+     * @return mixed
+     */
     protected function findEntity(Request $request)
     {
         $id = $request->route()->parameter($this->getIdParameter());
 
-        $entity = $this->callEntityMethod('find', $id);
+        $entity = $this->callEntityMethod($request, 'find', $id);
 
         if (!$entity) {
             $this->notFound($id, $this->getEntityClassName());
@@ -247,5 +257,43 @@ trait CrudController
     protected function getRequest()
     {
         return isset($this->request) ? $this->request : Request::getInstance();
+    }
+
+    /**
+     * @param Request $request
+     * @param \Illuminate\Database\Eloquent\Model $entity
+     */
+    protected function saveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity)
+    {
+        $this->beforeSaveEntity($request, $entity);
+
+        if ($entity instanceof Model) {
+            $entity->saveRecursively();
+        } else {
+            $entity->save();
+        }
+    }
+
+    /**
+     * Called before saveEntity
+     * @param Request $request
+     * @param \Illuminate\Database\Eloquent\Model $entity
+     */
+    protected function beforeSaveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity)
+    {
+
+    }
+
+    /**
+     * @param $action
+     * @param null $entity
+     */
+    protected function authorizeCrudRequest($action, $entity = null)
+    {
+        if ($entity === null) {
+            $entity = $this->getEntityClassName();
+        }
+
+        $this->authorize($action, $entity);
     }
 }
