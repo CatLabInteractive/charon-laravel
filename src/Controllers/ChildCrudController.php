@@ -17,7 +17,7 @@ trait ChildCrudController
     use CrudController;
 
     /**
-     * OrganisationController constructor.
+     * ChildCrudController constructor.
      */
     public function __construct()
     {
