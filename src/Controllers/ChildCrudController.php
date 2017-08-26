@@ -2,6 +2,7 @@
 
 namespace CatLab\Charon\Laravel\Controllers;
 
+use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Exceptions\ResourceException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -74,5 +75,23 @@ trait ChildCrudController
     protected function getInverseRelationship(\Illuminate\Database\Eloquent\Model $entity)
     {
         return $entity->{$this->getRelationshipKey()}();
+    }
+
+    /**
+     * Checks if user is authorized to watch an index of the entities.
+     * @param Request $request
+     */
+    protected function authorizeIndex(Request $request)
+    {
+        $this->authorizeCrudRequest(Action::INDEX, null, $this->getParent($request));
+    }
+
+    /**
+     * Checks if user is authorized to create an entity.
+     * @param Request $request
+     */
+    protected function authorizeCreate(Request $request)
+    {
+        $this->authorizeCrudRequest(Action::CREATE, null, $this->getParent($request));
     }
 }

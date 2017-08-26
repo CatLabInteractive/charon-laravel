@@ -72,7 +72,7 @@ trait CrudController
     {
         $this->request = $request;
 
-        $this->authorizeCrudRequest(Action::INDEX);
+        $this->authorizeIndex($request);
         $context = $this->getContext(Action::INDEX);
 
         $models = $this->getModels($this->getIndexQuery($request), $context);
@@ -91,7 +91,7 @@ trait CrudController
         $this->request = $request;
 
         $entity = $this->findEntity($request);
-        $this->authorizeCrudRequest(Action::VIEW, $entity);
+        $this->authorizeView($request, $entity);
 
         return $this->createViewEntityResponse($entity);
     }
@@ -104,7 +104,7 @@ trait CrudController
     {
         $this->request = $request;
 
-        $this->authorizeCrudRequest(Action::CREATE);
+        $this->authorizeCreate($request);
 
         $writeContext = $this->getContext(Action::CREATE);
         $inputResource = $this->bodyToResource($writeContext);
@@ -133,7 +133,7 @@ trait CrudController
         $this->request = $request;
 
         $entity = $this->findEntity($request);
-        $this->authorizeCrudRequest(Action::EDIT, $entity);
+        $this->authorizeEdit($request, $entity);
 
         $writeContext = $this->getContext(Action::EDIT);
         $inputResource = $this->bodyToResource($writeContext);
@@ -166,7 +166,7 @@ trait CrudController
         $this->request = $request;
 
         $entity = $this->findEntity($request);
-        $this->authorizeCrudRequest(Action::DESTROY, $entity);
+        $this->authorizeDestroy($request, $entity);
 
         $entity->delete();
 
@@ -285,15 +285,64 @@ trait CrudController
     }
 
     /**
+     * Checks if user is authorized to watch an index of the entities.
+     * @param Request $request
+     */
+    protected function authorizeIndex(Request $request)
+    {
+        $this->authorizeCrudRequest(Action::INDEX);
+    }
+
+    /**
+     * Checks if user is authorized to create an entity.
+     * @param Request $request
+     */
+    protected function authorizeCreate(Request $request)
+    {
+        $this->authorizeCrudRequest(Action::CREATE);
+    }
+
+    /**
+     * Checks if user is authorized to view an entity.
+     * @param Request $request
+     * @param $entity
+     */
+    protected function authorizeView(Request $request, $entity)
+    {
+        $this->authorizeCrudRequest(Action::VIEW, $entity);
+    }
+
+    /**
+     * Checks if user is authorized to edit the entity.
+     * @param Request $request
+     * @param $entity
+     */
+    protected function authorizeEdit(Request $request, $entity)
+    {
+        $this->authorizeCrudRequest(Action::EDIT, $entity);
+    }
+
+    /**
+     * Checks if user is authorized to destroy the entity.
+     * @param Request $request
+     * @param $entity
+     */
+    protected function authorizeDestroy(Request $request, $entity)
+    {
+        $this->authorizeCrudRequest(Action::DESTROY, $entity);
+    }
+
+    /**
      * @param $action
      * @param null $entity
+     * @param null $subject
      */
-    protected function authorizeCrudRequest($action, $entity = null)
+    protected function authorizeCrudRequest($action, $entity = null, $subject = null)
     {
         if ($entity === null) {
             $entity = $this->getEntityClassName();
         }
 
-        $this->authorize($action, $entity);
+        $this->authorize($action, [ $entity, $subject ]);
     }
 }
