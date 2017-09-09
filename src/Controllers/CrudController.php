@@ -265,21 +265,37 @@ trait CrudController
      */
     protected function saveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity)
     {
-        $this->beforeSaveEntity($request, $entity);
+        $isNew = !$entity->exists;
+
+        $this->beforeSaveEntity($request, $entity, $isNew);
 
         if ($entity instanceof Model) {
             $entity->saveRecursively();
         } else {
             $entity->save();
         }
+
+        $this->afterSaveEntity($request, $entity, $isNew);
     }
 
     /**
      * Called before saveEntity
      * @param Request $request
      * @param \Illuminate\Database\Eloquent\Model $entity
+     * @param bool $isNew
      */
-    protected function beforeSaveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity)
+    protected function beforeSaveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity, $isNew = false)
+    {
+
+    }
+
+    /**
+     * Called after saveEntity
+     * @param Request $request
+     * @param \Illuminate\Database\Eloquent\Model $entity
+     * @param bool $isNew
+     */
+    protected function afterSaveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity, $isNew = false)
     {
 
     }
