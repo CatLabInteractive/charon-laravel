@@ -479,6 +479,10 @@ trait ResourceController
      */
     protected function getRequest()
     {
-        return Request::getInstance();
+        if (method_exists(\Illuminate\Http\Request::class, 'instance')) {
+            return Request::instance();
+        } else {
+            return Request::getInstance();
+        }
     }
 }

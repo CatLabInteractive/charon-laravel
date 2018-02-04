@@ -256,7 +256,15 @@ trait CrudController
      */
     protected function getRequest()
     {
-        return isset($this->request) ? $this->request : Request::getInstance();
+        if (isset($this->request)) {
+            return $this->request;
+        }
+
+        if (method_exists(\Illuminate\Http\Request::class, 'instance')) {
+            return \Request::instance();
+        } else {
+            return \Request::getInstance();
+        }
     }
 
     /**
