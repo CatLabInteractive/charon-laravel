@@ -15,7 +15,7 @@
         }
     },
     "require": {
-        "catlabinteractive/charon": "dev-master",
+        "catlabinteractive/charon": "~1.0.10",
         "catlabinteractive/base-laravel": "^5.2"
     },
     "require-dev": {
