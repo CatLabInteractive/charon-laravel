@@ -149,17 +149,18 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
         if ($existingChildren instanceof Relation) {
             $children = clone $existingChildren;
 
-            $children->where(function($builder) use ($identifiers) {
-                foreach ($identifiers as $item) {
-                    /** @var PropertyValueCollection $item */
-                    $builder->where(function($builder) use ($item) {
-                        foreach ($item->toMap() as $k => $v) {
-                            $builder->orWhere($k, '!=', $v);
-                        }
-                    });
-                }
-            });
-
+            if (count($identifiers) > 0) {
+                $children->where(function ($builder) use ($identifiers) {
+                    foreach ($identifiers as $item) {
+                        /** @var PropertyValueCollection $item */
+                        $builder->where(function ($builder) use ($item) {
+                            foreach ($item->toMap() as $k => $v) {
+                                $builder->orWhere($k, '!=', $v);
+                            }
+                        });
+                    }
+                });
+            }
 
             $toRemove = $children->get();
             if (count($toRemove) > 0) {
