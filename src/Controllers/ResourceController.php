@@ -156,10 +156,7 @@ trait ResourceController
         $this->resourceDefinition = $resourceDefinition;
 
         if (!isset($resourceTransformer)) {
-            $this->resourceTransformer = new ResourceTransformer(
-                new PropertyResolver(),
-                new PropertySetter()
-            );
+            $this->resourceTransformer = $this->createResourceTransformer();
         }
 
         return $this;
@@ -484,5 +481,17 @@ trait ResourceController
         } else {
             return Request::getInstance();
         }
+    }
+
+    /**
+     * Create (and return) a resource transformer.
+     * @return ResourceTransformer
+     */
+    protected function createResourceTransformer()
+    {
+        return new ResourceTransformer(
+            new PropertyResolver(),
+            new PropertySetter()
+        );
     }
 }
