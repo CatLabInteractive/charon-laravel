@@ -19,26 +19,28 @@ class InputTransformer
      *
      * @param \Illuminate\Http\Request $request
      * @param \Closure $next
+     * @param string $in            What container should contain the input?
      * @param string $type          Container of parameter that should be transformed (query, header, ...)
      * @param string $name          Name of parameter that should be transformed
      * @param string $transformer   Transformer that should be used to transform the parameter.
      * @return mixed
      */
-    public function handle($request, Closure $next, $type, $name, $transformer)
+    public function handle($request, Closure $next, $in, $type, $name, $transformer)
     {
-        $this->transformParameter($request, $type, $name, $transformer);
+        $this->transformParameter($request, $in, $type, $name, $transformer);
         return $next($request);
     }
 
     /**
      * @param \Illuminate\Http\Request $request
+     * @param $in
      * @param $type
      * @param $name
      * @param $transformerName
      */
-    protected function transformParameter($request, $type, $name, $transformerName)
+    protected function transformParameter($request, $in, $type, $name, $transformerName)
     {
-        switch ($type)
+        switch ($in)
         {
             case 'header':
                 $bag = $request->headers;
