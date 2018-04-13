@@ -2,7 +2,10 @@
 
 namespace CatLab\Charon\Laravel\Middleware;
 
+use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Library\TransformerLibrary;
+use CatLab\Requirements\Enums\PropertyType;
+use CatLab\Requirements\Traits\TypeSetter;
 use Closure;
 
 /**
@@ -64,7 +67,15 @@ class InputTransformer
             throw new \InvalidArgumentException("Transformer " . $transformerName . " could not be created");
         }
 
+        if (ArrayHelper::isIterable($value)) {
+            foreach ($value as $k => $v) {
+                $value[$k] = $transformer->toParameterValue($v);
+            }
+        } else {
+            $value = $transformer->toParameterValue($value);
+        }
+        
         // Actually transform the input.
-        $bag->set($name, $transformer->toParameterValue($value));
+        $bag->set($name, $value);
     }
 }

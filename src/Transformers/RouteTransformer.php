@@ -4,6 +4,7 @@ namespace CatLab\Charon\Laravel\Transformers;
 
 use CatLab\Charon\Collections\RouteCollection;
 use CatLab\Charon\Laravel\Middleware\InputTransformer;
+use CatLab\Charon\Transformers\ArrayTransformer;
 use \Route;
 
 /**
@@ -34,20 +35,28 @@ class RouteTransformer
             // The InputTransformer middleware makes sure that the parameters that require a
             // transformation (for example DateTimes) are transformed before the controller takes charge.
             foreach ($route->getParameters() as $parameter) {
-                if ($parameter->getTransformer()) {
-                    $middlewareProps = [
-                        InputTransformer::class,
-                    ];
 
-                    $middlewareParameters = [
+                // Is array? Act first!
+                if ($parameter->isArray()) {
+                    $middleware = $this->getMiddlewareParameters(
+                        $parameter->getIn(),
+                        $parameter->getType(),
+                        $parameter->getName(),
+                        ArrayTransformer::class
+                    );
+                    $laravelRoute->middleware($middleware);
+                }
+
+                // Now check if the parameter has an array
+                if ($parameter->getTransformer()) {
+
+                    $middleware = $this->getMiddlewareParameters(
                         $parameter->getIn(),
                         $parameter->getType(),
                         $parameter->getName(),
                         get_class($parameter->getTransformer())
-                    ];
-
-                    $middlewareProps[] = implode(',', $middlewareParameters);
-                    $laravelRoute->middleware(implode(':', $middlewareProps));
+                    );
+                    $laravelRoute->middleware($middleware);
                 }
             }
 
@@ -55,5 +64,30 @@ class RouteTransformer
                 $laravelRoute->middleware($options['middleware']);
             }
         }
+    }
+
+    /**
+     * @param $container
+     * @param $type
+     * @param $name
+     * @param $transformer
+     * @return string
+     */
+    protected function getMiddlewareParameters($container, $type, $name, $transformer)
+    {
+        $middlewareProps = [
+            InputTransformer::class,
+        ];
+
+        $middlewareParameters = [
+            $container,
+            $type,
+            $name,
+            $transformer
+        ];
+
+        $middlewareProps[] = implode(',', $middlewareParameters);
+
+        return implode(':', $middlewareProps);
     }
 }
