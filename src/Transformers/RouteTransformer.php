@@ -4,6 +4,7 @@ namespace CatLab\Charon\Laravel\Transformers;
 
 use CatLab\Charon\Collections\RouteCollection;
 use CatLab\Charon\Laravel\Middleware\InputTransformer;
+use CatLab\Charon\Library\TransformerLibrary;
 use CatLab\Charon\Transformers\ArrayTransformer;
 use \Route;
 
@@ -23,6 +24,7 @@ class RouteTransformer
     /**
      * @param RouteCollection $routes
      * @return void
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      */
     public function transform(RouteCollection $routes)
     {
@@ -36,17 +38,6 @@ class RouteTransformer
             // transformation (for example DateTimes) are transformed before the controller takes charge.
             foreach ($route->getParameters() as $parameter) {
 
-                // Is array? Act first!
-                if ($parameter->isArray()) {
-                    $middleware = $this->getMiddlewareParameters(
-                        $parameter->getIn(),
-                        $parameter->getType(),
-                        $parameter->getName(),
-                        ArrayTransformer::class
-                    );
-                    $laravelRoute->middleware($middleware);
-                }
-
                 // Now check if the parameter has an array
                 if ($parameter->getTransformer()) {
 
@@ -54,7 +45,7 @@ class RouteTransformer
                         $parameter->getIn(),
                         $parameter->getType(),
                         $parameter->getName(),
-                        get_class($parameter->getTransformer())
+                        TransformerLibrary::serialize($parameter->getTransformer())
                     );
                     $laravelRoute->middleware($middleware);
                 }

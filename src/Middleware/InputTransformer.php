@@ -22,11 +22,12 @@ class InputTransformer
      *
      * @param \Illuminate\Http\Request $request
      * @param \Closure $next
-     * @param string $in            What container should contain the input?
-     * @param string $type          Container of parameter that should be transformed (query, header, ...)
-     * @param string $name          Name of parameter that should be transformed
-     * @param string $transformer   Transformer that should be used to transform the parameter.
+     * @param string $in What container should contain the input?
+     * @param string $type Container of parameter that should be transformed (query, header, ...)
+     * @param string $name Name of parameter that should be transformed
+     * @param string $transformer Transformer that should be used to transform the parameter.
      * @return mixed
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      */
     public function handle($request, Closure $next, $in, $type, $name, $transformer)
     {
@@ -40,6 +41,7 @@ class InputTransformer
      * @param $type
      * @param $name
      * @param $transformerName
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      */
     protected function transformParameter($request, $in, $type, $name, $transformerName)
     {
