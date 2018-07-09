@@ -11,6 +11,7 @@ use CatLab\Charon\Models\Properties\Base\Field;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Models\Values\Base\RelationshipValue;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -37,7 +38,10 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
         // Check for laravel "relationship" method
         elseif (method_exists($entity, $name)) {
 
-            if ($entity->relationLoaded($name)) {
+            if (
+                $entity instanceof Model &&
+                $entity->relationLoaded($name)
+            ) {
                 return $entity->$name;
             } else {
 
@@ -100,6 +104,10 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             }
 
             $models = $models->get();
+        }
+
+        if ($models === null) {
+            return new ResourceCollection();
         }
 
         return $transformer->toResources(
