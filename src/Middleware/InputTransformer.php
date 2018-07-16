@@ -56,7 +56,7 @@ class InputTransformer
                 break;
 
             default:
-                throw new \InvalidArgumentException("InputTransformer doesn't know how to handle " . $type . " parameters");
+                throw new \InvalidArgumentException("InputTransformer doesn't know how to handle " . $in . " parameters");
         }
 
         $value = $bag->get($name);
