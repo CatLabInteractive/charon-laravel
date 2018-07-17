@@ -1,6 +1,6 @@
 <?php
 
-namespace CatLab\Charon\Laravel;
+namespace CatLab\Charon\Laravel\Exceptions;
 
 use CatLab\Charon\Exceptions\ResourceException;
 

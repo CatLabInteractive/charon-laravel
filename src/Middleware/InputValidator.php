@@ -5,6 +5,7 @@ namespace CatLab\Charon\Laravel\Middleware;
 use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Library\TransformerLibrary;
 use CatLab\Charon\Models\Routing\Parameters\Base\Parameter;
+use CatLab\Charon\Laravel\Exceptions\InputValidatorException;
 use CatLab\Requirements\Collections\RequirementCollection;
 use CatLab\Requirements\Collections\ValidatorCollection;
 use CatLab\Requirements\Enums\PropertyType;
@@ -89,7 +90,7 @@ class InputValidator
                 $validators->validate($parameter, $v);
             }
         } catch (PropertyValidationException $e) {
-            abort(400, $e->getMessages()->__toString());
+            throw InputValidatorException::make($e);
         }
     }
 }
