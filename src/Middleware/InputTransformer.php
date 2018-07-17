@@ -4,8 +4,6 @@ namespace CatLab\Charon\Laravel\Middleware;
 
 use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Library\TransformerLibrary;
-use CatLab\Requirements\Enums\PropertyType;
-use CatLab\Requirements\Traits\TypeSetter;
 use Closure;
 
 /**
@@ -15,7 +13,7 @@ use Closure;
  *
  * @package CatLab\Charon\Laravel\Middleware
  */
-class InputTransformer
+class InputTransformer extends AbstractMiddleware
 {
     /**
      * Handle an incoming request.
@@ -45,21 +43,8 @@ class InputTransformer
      */
     protected function transformParameter($request, $in, $type, $name, $transformerName)
     {
-        switch ($in)
-        {
-            case 'header':
-                $bag = $request->headers;
-                break;
+        $value = $this->getInput($request, $in, $name);
 
-            case 'query':
-                $bag = $request->query;
-                break;
-
-            default:
-                throw new \InvalidArgumentException("InputTransformer doesn't know how to handle " . $in . " parameters");
-        }
-
-        $value = $bag->get($name);
         if ($value === null) {
             return;
         }
@@ -76,8 +61,8 @@ class InputTransformer
         } else {
             $value = $transformer->toParameterValue($value);
         }
-        
-        // Actually transform the input.
-        $bag->set($name, $value);
+
+        // Actually set the input in the request
+        $this->setInput($request, $in, $name, $value);
     }
 }

@@ -2,16 +2,11 @@
 
 namespace CatLab\Charon\Laravel\Middleware;
 
-use CatLab\Base\Helpers\ArrayHelper;
-use CatLab\Charon\Library\TransformerLibrary;
 use CatLab\Charon\Models\Routing\Parameters\Base\Parameter;
 use CatLab\Charon\Laravel\Exceptions\InputValidatorException;
 use CatLab\Requirements\Collections\RequirementCollection;
-use CatLab\Requirements\Collections\ValidatorCollection;
-use CatLab\Requirements\Enums\PropertyType;
 use CatLab\Requirements\Exceptions\PropertyValidationException;
 use CatLab\Requirements\Exceptions\RequirementException;
-use CatLab\Requirements\Traits\TypeSetter;
 use Closure;
 
 /**
@@ -22,7 +17,7 @@ use Closure;
  *
  * @package CatLab\Charon\Laravel\Middleware
  */
-class InputValidator
+class InputValidator extends AbstractMiddleware
 {
     /**
      * Handle an incoming request.
@@ -54,30 +49,12 @@ class InputValidator
      */
     protected function validateParameter($request, $in, $type, $name, $requirementCollection)
     {
-        switch ($in)
-        {
-            case 'header':
-                $bag = $request->headers;
-                break;
-
-            case 'query':
-                $bag = $request->query;
-                break;
-
-            case 'path':
-                $bag = $request->attributes;
-                break;
-
-            default:
-                throw new \InvalidArgumentException("InputValidator doesn't know how to handle " . $in . " parameters");
-        }
+        $value = $this->getInput($request, $in, $name);
 
         $validators = RequirementCollection::make($requirementCollection);
         if (!$validators instanceof RequirementCollection) {
             abort(500, 'Invalid input validator provided; validator needs to be instance of ValidatorCollection');
         }
-
-        $value = $bag->get($name);
 
         try {
 
