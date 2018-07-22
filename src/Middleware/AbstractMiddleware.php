@@ -32,7 +32,7 @@ abstract class AbstractMiddleware
 
             default:
                 throw new \InvalidArgumentException(
-                    get_class($this) . " doesn't know how to handle " . $in . " parameters"
+                    get_class($this) . " doesn't know how to handle '" . $in . "' parameters"
                 );
         }
     }
@@ -54,6 +54,11 @@ abstract class AbstractMiddleware
 
             case 'query':
                 $request->query->set($name, $value);
+                break;
+
+            case 'path':
+                $route = call_user_func($request->getRouteResolver());
+                $route->parameter($name, $value);
                 break;
 
             default:
