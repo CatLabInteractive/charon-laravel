@@ -30,12 +30,12 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
     protected function getValueFromEntity($entity, $name, array $getterParameters)
     {
         // Check for get method
-        if (method_exists($entity, 'get'.ucfirst($name))) {
+        if ($this->methodExists($entity, 'get'.ucfirst($name))) {
             return call_user_func_array(array($entity, 'get'.ucfirst($name)), $getterParameters);
         }
 
         // Check for laravel "relationship" method
-        elseif (method_exists($entity, $name)) {
+        elseif ($this->methodExists($entity, $name)) {
 
             if ($entity->relationLoaded($name)) {
                 return $entity->$name;
@@ -53,7 +53,7 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             }
         }
 
-        elseif (method_exists($entity, 'is'.ucfirst($name))) {
+        elseif ($this->methodExists($entity, 'is'.ucfirst($name))) {
             return call_user_func_array(array($entity, 'is'.ucfirst($name)), $getterParameters);
         }
 

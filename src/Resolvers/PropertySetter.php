@@ -33,7 +33,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
     {
         // Check for link method name.
         $methodName = 'associate' . ucfirst($name);
-        if (method_exists($entity, $methodName)) {
+        if ($this->methodExists($entity, $methodName)) {
             array_unshift($setterParameters, $value);
             call_user_func_array(array ($entity, $methodName), $setterParameters);
         } else {
@@ -51,7 +51,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
     {
         // Check for link method name.
         $methodName = 'dissociate' . ucfirst($name);
-        if (method_exists($entity, $methodName)) {
+        if ($this->methodExists($entity, $methodName)) {
             call_user_func_array(array ($entity, $methodName), $setterParameters);
         } else {
             $entity->$name()->dissociate();
@@ -68,7 +68,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
     protected function setValueInEntity($entity, $name, $value, $setterParameters = [])
     {
         // Check for set method
-        if (method_exists($entity, 'set'.ucfirst($name))) {
+        if ($this->methodExists($entity, 'set'.ucfirst($name))) {
             array_unshift($setterParameters, $value);
             return call_user_func_array(array($entity, 'set'.ucfirst($name)), $setterParameters);
         } else {
@@ -92,7 +92,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
             return;
         }
 
-        if (method_exists($entity, 'add'.ucfirst($name))) {
+        if ($this->methodExists($entity, 'add'.ucfirst($name))) {
             array_unshift($setterParameters, $childEntities);
             return call_user_func_array(array($entity, 'add'.ucfirst($name)), $setterParameters);
         } else {
@@ -194,7 +194,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
         }
 
         // Check for add method
-        if (method_exists($entity, 'remove'.ucfirst($name))) {
+        if ($this->methodExists($entity, 'remove'.ucfirst($name))) {
             array_unshift($parameters, $childEntities);
             call_user_func_array(array($entity, 'remove'.ucfirst($name)), $parameters);
         } else {
