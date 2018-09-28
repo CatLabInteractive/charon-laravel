@@ -20,7 +20,13 @@ $routes->group(
     function(RouteCollection $routes) {
 
         $routes
-            ->parameters()->path('format')->enum(['json'])->describe('Output format')->default('json');
+            ->parameters()
+            ->path('format')
+            ->enum(['json'])
+            ->describe('Output format')
+            ->default('json')
+            ->required()
+        ;
 
         $routes->returns()->statusCode(403)->describe('Authentication error');
         $routes->returns()->statusCode(404)->describe('Entity not found');

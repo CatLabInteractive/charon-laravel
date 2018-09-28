@@ -4,6 +4,8 @@ namespace CatLab\Charon\Laravel\Transformers;
 
 use CatLab\Charon\Collections\RouteCollection;
 use CatLab\Charon\Laravel\Middleware\InputTransformer;
+use CatLab\Charon\Laravel\Middleware\InputValidator;
+use CatLab\Charon\Library\TransformerLibrary;
 use CatLab\Charon\Transformers\ArrayTransformer;
 use \Route;
 
@@ -23,6 +25,7 @@ class RouteTransformer
     /**
      * @param RouteCollection $routes
      * @return void
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      */
     public function transform(RouteCollection $routes)
     {
@@ -36,25 +39,26 @@ class RouteTransformer
             // transformation (for example DateTimes) are transformed before the controller takes charge.
             foreach ($route->getParameters() as $parameter) {
 
-                // Is array? Act first!
-                if ($parameter->isArray()) {
-                    $middleware = $this->getMiddlewareParameters(
+                // Now check if the parameter has an array
+                if ($parameter->getTransformer()) {
+
+                    $middleware = $this->getTransformerMiddlewareParameters(
                         $parameter->getIn(),
                         $parameter->getType(),
                         $parameter->getName(),
-                        ArrayTransformer::class
+                        TransformerLibrary::serialize($parameter->getTransformer())
                     );
                     $laravelRoute->middleware($middleware);
                 }
 
-                // Now check if the parameter has an array
-                if ($parameter->getTransformer()) {
-
-                    $middleware = $this->getMiddlewareParameters(
+                // Also check if we need to add a validator for the parameters.
+                $requirements = $parameter->getRequirements();
+                if (count($requirements) > 0) {
+                    $middleware = $this->getValidatorMiddlewareParameters(
                         $parameter->getIn(),
                         $parameter->getType(),
                         $parameter->getName(),
-                        get_class($parameter->getTransformer())
+                        $requirements->serialize()
                     );
                     $laravelRoute->middleware($middleware);
                 }
@@ -73,7 +77,7 @@ class RouteTransformer
      * @param $transformer
      * @return string
      */
-    protected function getMiddlewareParameters($container, $type, $name, $transformer)
+    protected function getTransformerMiddlewareParameters($container, $type, $name, $transformer)
     {
         $middlewareProps = [
             InputTransformer::class,
@@ -84,6 +88,31 @@ class RouteTransformer
             $type,
             $name,
             $transformer
+        ];
+
+        $middlewareProps[] = implode(',', $middlewareParameters);
+
+        return implode(':', $middlewareProps);
+    }
+
+    /**
+     * @param $container
+     * @param $type
+     * @param $name
+     * @param $serializedValidator
+     * @return string
+     */
+    protected function getValidatorMiddlewareParameters($container, $type, $name, $serializedValidator)
+    {
+        $middlewareProps = [
+            InputValidator::class,
+        ];
+
+        $middlewareParameters = [
+            $container,
+            $type,
+            $name,
+            $serializedValidator
         ];
 
         $middlewareProps[] = implode(',', $middlewareParameters);

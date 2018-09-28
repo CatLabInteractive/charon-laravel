@@ -11,6 +11,7 @@ use CatLab\Charon\Models\Properties\Base\Field;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Models\Values\Base\RelationshipValue;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -30,14 +31,17 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
     protected function getValueFromEntity($entity, $name, array $getterParameters)
     {
         // Check for get method
-        if (method_exists($entity, 'get'.ucfirst($name))) {
+        if ($this->methodExists($entity, 'get'.ucfirst($name))) {
             return call_user_func_array(array($entity, 'get'.ucfirst($name)), $getterParameters);
         }
 
         // Check for laravel "relationship" method
-        elseif (method_exists($entity, $name)) {
+        elseif ($this->methodExists($entity, $name)) {
 
-            if ($entity->relationLoaded($name)) {
+            if (
+                $entity instanceof Model &&
+                $entity->relationLoaded($name)
+            ) {
                 return $entity->$name;
             } else {
 
@@ -53,7 +57,7 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             }
         }
 
-        elseif (method_exists($entity, 'is'.ucfirst($name))) {
+        elseif ($this->methodExists($entity, 'is'.ucfirst($name))) {
             return call_user_func_array(array($entity, 'is'.ucfirst($name)), $getterParameters);
         }
 
@@ -100,6 +104,10 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             }
 
             $models = $models->get();
+        }
+
+        if ($models === null) {
+            return new ResourceCollection();
         }
 
         return $transformer->toResources(

@@ -4,8 +4,6 @@ namespace CatLab\Charon\Laravel\Middleware;
 
 use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Library\TransformerLibrary;
-use CatLab\Requirements\Enums\PropertyType;
-use CatLab\Requirements\Traits\TypeSetter;
 use Closure;
 
 /**
@@ -15,18 +13,19 @@ use Closure;
  *
  * @package CatLab\Charon\Laravel\Middleware
  */
-class InputTransformer
+class InputTransformer extends AbstractMiddleware
 {
     /**
      * Handle an incoming request.
      *
      * @param \Illuminate\Http\Request $request
      * @param \Closure $next
-     * @param string $in            What container should contain the input?
-     * @param string $type          Container of parameter that should be transformed (query, header, ...)
-     * @param string $name          Name of parameter that should be transformed
-     * @param string $transformer   Transformer that should be used to transform the parameter.
+     * @param string $in What container should contain the input?
+     * @param string $type Container of parameter that should be transformed (query, header, ...)
+     * @param string $name Name of parameter that should be transformed
+     * @param string $transformer Transformer that should be used to transform the parameter.
      * @return mixed
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      */
     public function handle($request, Closure $next, $in, $type, $name, $transformer)
     {
@@ -40,24 +39,12 @@ class InputTransformer
      * @param $type
      * @param $name
      * @param $transformerName
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      */
     protected function transformParameter($request, $in, $type, $name, $transformerName)
     {
-        switch ($in)
-        {
-            case 'header':
-                $bag = $request->headers;
-                break;
+        $value = $this->getInput($request, $in, $name);
 
-            case 'query':
-                $bag = $request->query;
-                break;
-
-            default:
-                throw new \InvalidArgumentException("InputTransformer doesn't know how to handle " . $type . " parameters");
-        }
-
-        $value = $bag->get($name);
         if ($value === null) {
             return;
         }
@@ -74,8 +61,8 @@ class InputTransformer
         } else {
             $value = $transformer->toParameterValue($value);
         }
-        
-        // Actually transform the input.
-        $bag->set($name, $value);
+
+        // Actually set the input in the request
+        $this->setInput($request, $in, $name, $value);
     }
 }
