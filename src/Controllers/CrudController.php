@@ -110,7 +110,7 @@ trait CrudController
         $inputResource = $this->bodyToResource($writeContext);
 
         try {
-            $inputResource->validate();
+            $inputResource->validate($writeContext);
         } catch (ResourceValidationException $e) {
             return $this->getValidationErrorResponse($e);
         }
