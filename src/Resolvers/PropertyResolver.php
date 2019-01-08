@@ -107,7 +107,7 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
         }
 
         if ($models === null) {
-            return new ResourceCollection();
+            return $transformer->getResourceFactory()->createResourceCollection();;
         }
 
         return $transformer->toResources(
@@ -126,6 +126,8 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
      * @param PropertyValueCollection $identifiers
      * @param Context $context
      * @return mixed
+     * @throws InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
     public function getChildByIdentifiers(
         ResourceTransformer $transformer,
