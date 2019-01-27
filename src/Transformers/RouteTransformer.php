@@ -6,6 +6,7 @@ use CatLab\Charon\Collections\RouteCollection;
 use CatLab\Charon\Laravel\Middleware\InputTransformer;
 use CatLab\Charon\Laravel\Middleware\InputValidator;
 use CatLab\Charon\Library\TransformerLibrary;
+use CatLab\Charon\Models\Routing\Parameters\Base\Parameter;
 use CatLab\Charon\Transformers\ArrayTransformer;
 use \Route;
 
@@ -38,6 +39,12 @@ class RouteTransformer
             // The InputTransformer middleware makes sure that the parameters that require a
             // transformation (for example DateTimes) are transformed before the controller takes charge.
             foreach ($route->getParameters() as $parameter) {
+
+                // Body parameter are not transformed or validated at middleware stage.
+                // That's why we skip them here.
+                if ($parameter->getIn() === Parameter::IN_BODY) {
+                    continue;
+                }
 
                 // Now check if the parameter has an array
                 if ($parameter->getTransformer()) {
