@@ -8,6 +8,7 @@ use CatLab\Charon\Exceptions\ResourceException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
 use CatLab\Charon\Laravel\Database\Model;
+use CatLab\Charon\Laravel\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Models\ResourceResponse;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
@@ -127,12 +128,17 @@ trait CrudController
     /**
      * @param Request $request
      * @return ResourceResponse
+     * @throws EntityNotFoundException
      */
     public function edit(Request $request)
     {
         $this->request = $request;
 
         $entity = $this->findEntity($request);
+        if (!$entity) {
+            throw new EntityNotFoundException('Could not find entity with id ' . $entity->id);
+        }
+
         $this->authorizeEdit($request, $entity);
 
         $writeContext = $this->getContext(Action::EDIT);
