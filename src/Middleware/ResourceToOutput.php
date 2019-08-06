@@ -46,7 +46,7 @@ class ResourceToOutput
      */
     protected function toJSON(ResourceResponse $response)
     {
-        return \Response::json($response->getResource()->toArray());
+        return \Response::json($response->getResource()->toArray(), $response->getStatusCode());
     }
 
     /**
