@@ -2,7 +2,7 @@
 
 namespace CatLab\Charon\Laravel\Database;
 
-use CatLab\Charon\Laravel\PropertySetterException;
+use CatLab\Charon\Laravel\Exceptions\PropertySetterException;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -38,6 +38,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
     /**
      * Save all related entities.
      * @throws PropertySetterException
+     * @throws \Exception
      */
     protected function saveTheChildren()
     {
