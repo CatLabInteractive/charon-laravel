@@ -8,7 +8,7 @@ use CatLab\Charon\Exceptions\ResourceException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
 use CatLab\Charon\Laravel\Database\Model;
-use CatLab\Charon\Models\ResourceResponse;
+use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -126,7 +126,7 @@ trait CrudController
 
     /**
      * @param Request $request
-     * @return ResourceResponse
+     * @return \CatLab\Charon\Laravel\Models\ResourceResponse
      */
     public function edit(Request $request)
     {
@@ -179,7 +179,7 @@ trait CrudController
     /**
      *
      * @param $entity
-     * @return ResourceResponse
+     * @return \CatLab\Charon\Laravel\Models\ResourceResponse
      */
     protected function createViewEntityResponse($entity)
     {

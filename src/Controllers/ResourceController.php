@@ -13,7 +13,7 @@ use CatLab\Charon\Interfaces\SerializableResource;
 use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
 use CatLab\Charon\Laravel\InputParsers\PostInputParser;
 use CatLab\Charon\Models\ResourceDefinition;
-use CatLab\Charon\Models\ResourceResponse;
+use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Laravel\Database\SelectQueryTransformer;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition as ResourceDefinitionContract;

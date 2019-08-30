@@ -3,10 +3,14 @@
 namespace CatLab\Charon\Laravel\Middleware;
 
 use Closure;
-use CatLab\Charon\Models\ResourceResponse;
+use CatLab\Charon\Laravel\Models\ResourceResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
+/**
+ * Class ResourceToOutput
+ * @package CatLab\Charon\Laravel\Middleware
+ */
 class ResourceToOutput
 {
     const RETURN_TYPE_TEXT = 'text';
@@ -41,7 +45,7 @@ class ResourceToOutput
     }
 
     /**
-     * @param ResourceResponse $response
+     * @param \CatLab\Charon\Laravel\Models\ResourceResponse $response
      * @return \Illuminate\Http\JsonResponse
      */
     protected function toJSON(ResourceResponse $response)
