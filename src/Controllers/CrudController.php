@@ -153,14 +153,29 @@ trait CrudController
         $entity = $this->toEntity($inputResource, $writeContext, $entity);
 
         // Save the entity
+        $this->saveEntity($request, $entity);
+
+        // Turn back into a resource
+        return $this->createViewEntityResponse($entity);
+    }
+
+    /**
+     * @param Request $request
+     * @param \Illuminate\Database\Eloquent\Model $entity
+     */
+    protected function saveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity)
+    {
+        $isNew = !$entity->exists;
+
+        $this->beforeSaveEntity($request, $entity, $isNew);
+
         if ($entity instanceof Model) {
             $entity->saveRecursively();
         } else {
             $entity->save();
         }
 
-        // Turn back into a resource
-        return $this->createViewEntityResponse($entity);
+        $this->afterSaveEntity($request, $entity, $isNew);
     }
 
     /**
@@ -271,25 +286,6 @@ trait CrudController
         } else {
             return \Request::getInstance();
         }
-    }
-
-    /**
-     * @param Request $request
-     * @param \Illuminate\Database\Eloquent\Model $entity
-     */
-    protected function saveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity)
-    {
-        $isNew = !$entity->exists;
-
-        $this->beforeSaveEntity($request, $entity, $isNew);
-
-        if ($entity instanceof Model) {
-            $entity->saveRecursively();
-        } else {
-            $entity->save();
-        }
-
-        $this->afterSaveEntity($request, $entity, $isNew);
     }
 
     /**
