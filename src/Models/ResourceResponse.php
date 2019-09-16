@@ -26,7 +26,7 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
     /**
      * @var string
      */
-    private $jsonContent;
+    private $output;
 
     /**
      * @var \CatLab\Charon\Interfaces\Context
@@ -71,21 +71,21 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
     {
         header('Content-type: application/json');
 
-        echo $this->getContent();
+        echo $this->getOutput();
         return $this;
     }
 
     /**
      * Sends content for the current web response.
      *
-     * @return Response
+     * @return string
      */
-    public function getContent()
+    public function getOutput()
     {
-        if (!isset($this->jsonContent)) {
-            $this->jsonContent = json_encode($this->resource->toArray());;
+        if (!isset($this->output)) {
+            $this->output = $this->encode();
         }
-        return $this->jsonContent;
+        return $this->output;
     }
 
     /**
@@ -104,5 +104,21 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
     {
         $this->context = $context;
         return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function toArray()
+    {
+        return $this->resource->toArray();
+    }
+
+    /**
+     * @return string
+     */
+    protected function encode()
+    {
+        return json_encode($this->toArray());
     }
 }

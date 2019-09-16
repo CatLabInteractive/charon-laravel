@@ -1,48 +1,38 @@
 <?php
 
-namespace CatLab\Charon\Laravel\Middleware;
+namespace CatLab\Charon\Laravel\Models;
 
-use CatLab\Charon\Models\Values\ChildValue;
-use Closure;
 use CatLab\Charon\Interfaces\ResourceCollection;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Models\Values\Base\RelationshipValue;
+use CatLab\Charon\Models\Values\ChildValue;
 use CatLab\Charon\Models\Values\PropertyValue;
-use CatLab\Charon\Laravel\Models\ResourceResponse;
 
 /**
- * Class ResourceToOutput
- * @package CatLab\Charon\Laravel\Middleware
+ * Class JsonApiResponse
+ *
+ * A resource response that is formatted as a json api response.
+ *
+ * @package CatLab\Charon\Laravel\Models
  */
-class JsonApiOutput
+class JsonApiResponse extends ResourceResponse
 {
     private $output;
 
     private $alreadyIncluded;
 
     /**
-     * Handle an incoming request.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
      * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function toArray()
     {
-        $response = $next($request);
-
-        if ($response instanceof ResourceResponse) {
-           return $this->toJsonApi($response);
-        }
-
-        return $response;
+        return $this->toJsonApi();
     }
 
     /**
-     * @param ResourceResponse $response
-     * @return \Illuminate\Http\JsonResponse
+     * @return mixed
      */
-    protected function toJsonApi(ResourceResponse $response)
+    protected function toJsonApi()
     {
         $this->output = [];
         $this->output['data'] = [];
@@ -50,11 +40,10 @@ class JsonApiOutput
 
         $this->alreadyIncluded = [];
 
-
-        $resource = $response->getResource();
+        $resource = $this->getResource();
         $this->addResources($resource);
 
-        return \Response::json($this->output);
+        return $this->output;
     }
 
     protected function addResources($resource)
@@ -65,16 +54,24 @@ class JsonApiOutput
                 /** @var RESTResource $r */
                 $this->addResource($r);
             }
+            $this->output['meta'] = $resource->getMeta();
 
         }
     }
 
+    /**
+     * @param RESTResource $resource
+     */
     protected function addResource(RESTResource $resource)
     {
-        $this->output['data'][] = $this->getResource($resource);
+        $this->output['data'][] = $this->encodeResource($resource);
     }
 
-    protected function getResource(RESTResource $resource)
+    /**
+     * @param RESTResource $resource
+     * @return array
+     */
+    protected function encodeResource(RESTResource $resource)
     {
         $data = [
             'id' => $this->getIdentifier($resource),
@@ -123,7 +120,7 @@ class JsonApiOutput
         }
 
         $this->alreadyIncluded[$type . '.' . $id] = true;
-        $this->output['included'][]  = $this->getResource($resource);
+        $this->output['included'][]  = $this->encodeResource($resource);
     }
 
     /**

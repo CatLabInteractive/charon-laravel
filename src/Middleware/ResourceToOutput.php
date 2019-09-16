@@ -50,7 +50,7 @@ class ResourceToOutput
      */
     protected function toJSON(ResourceResponse $response)
     {
-        return \Response::json($response->getResource()->toArray());
+        return \Response::json($response->toArray());
     }
 
     /**
@@ -60,7 +60,7 @@ class ResourceToOutput
     protected function toText(ResourceResponse $response)
     {
         return new Response(
-            print_r($response->getResource()->toArray(), true),
+            print_r($response->toArray(), true),
             200,
             [
                 'Content-type' => 'text/text'

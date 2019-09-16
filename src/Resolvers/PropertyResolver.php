@@ -74,6 +74,7 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
      * @param Context $context
      * @return ResourceCollection
      * @throws InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
     public function resolveManyRelationship(
         ResourceTransformer $transformer,

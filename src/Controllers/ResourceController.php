@@ -183,6 +183,12 @@ trait ResourceController
      * @param Context $context
      * @param null $resourceDefinition
      * @return \CatLab\Charon\Interfaces\RESTResource|RESTResource
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
     public function toResource($entity, Context $context, $resourceDefinition = null) : RESTResource
     {
@@ -198,7 +204,11 @@ trait ResourceController
      * @param Context $context
      * @param null $resourceDefinition
      * @return ResourceCollection
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
      * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
      */
     public function toResources($entities, Context $context, $resourceDefinition = null) : ResourceCollection
     {
@@ -217,6 +227,7 @@ trait ResourceController
      * @param null $resourceDefinition
      * @param null $entityFactory
      * @return mixed
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      */
     public function toEntity(
         RESTResource $resource,
@@ -436,7 +447,6 @@ trait ResourceController
     }
 
     /**
-     * @deprecated Use new ResourceResponse()
      * @param $data
      * @param Context|null $context
      * @return \Symfony\Component\HttpFoundation\Response
@@ -448,6 +458,16 @@ trait ResourceController
         } else {
             return JsonResponse::create($this->resourceToArray($data));
         }
+    }
+
+    /**
+     * @param $data
+     * @param Context|null $context
+     * @return ResourceResponse
+     */
+    protected function getResourceResponse($data, Context $context  = null)
+    {
+        return new ResourceResponse($data, $context);
     }
 
     /**

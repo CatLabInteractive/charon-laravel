@@ -28,6 +28,8 @@ trait CrudController
     /*
      * Required methods
      */
+    abstract function getResourceResponse($data, \CatLab\Charon\Models\Context $context  = null);
+
     abstract function getContext($action = Action::VIEW, $parameters = []) : \CatLab\Charon\Interfaces\Context;
     abstract function getResourceDefinition(): ResourceDefinition;
 
@@ -54,6 +56,7 @@ trait CrudController
 
     /**
      * OrganisationController constructor.
+     * @throws ResourceException
      */
     public function __construct()
     {
@@ -67,6 +70,7 @@ trait CrudController
     /**
      * @param Request $request
      * @return Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function index(Request $request)
     {
@@ -78,13 +82,14 @@ trait CrudController
         $models = $this->getModels($this->getIndexQuery($request), $context);
         $resources = $this->toResources($models, $context);
 
-        return new ResourceResponse($resources, $context);
+        return $this->getResourceResponse($resources, $context);
     }
 
     /**
      * View an entity
      * @param Request $request
      * @return Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function view(Request $request)
     {
@@ -98,7 +103,10 @@ trait CrudController
 
     /**
      * Create a new entity
+     * @param Request $request
      * @return Response
+     * @throws \CatLab\Requirements\Exceptions\RequirementValidationException
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function store(Request $request)
     {
@@ -127,6 +135,8 @@ trait CrudController
     /**
      * @param Request $request
      * @return \CatLab\Charon\Laravel\Models\ResourceResponse
+     * @throws \CatLab\Requirements\Exceptions\RequirementValidationException
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function edit(Request $request)
     {
@@ -160,6 +170,7 @@ trait CrudController
     /**
      * @param Request $request
      * @return mixed
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function destroy(Request $request)
     {
@@ -186,7 +197,7 @@ trait CrudController
         $readContext = $this->getContext(Action::VIEW);
         $resource = $this->toResource($entity, $readContext);
 
-        return new ResourceResponse($resource, $readContext);
+        return $this->getResourceResponse($resource, $readContext);
     }
 
     /**
@@ -311,6 +322,7 @@ trait CrudController
     /**
      * Checks if user is authorized to watch an index of the entities.
      * @param Request $request
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     protected function authorizeIndex(Request $request)
     {
@@ -320,6 +332,7 @@ trait CrudController
     /**
      * Checks if user is authorized to create an entity.
      * @param Request $request
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     protected function authorizeCreate(Request $request)
     {
@@ -330,6 +343,7 @@ trait CrudController
      * Checks if user is authorized to view an entity.
      * @param Request $request
      * @param $entity
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     protected function authorizeView(Request $request, $entity)
     {
@@ -340,6 +354,7 @@ trait CrudController
      * Checks if user is authorized to edit the entity.
      * @param Request $request
      * @param $entity
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     protected function authorizeEdit(Request $request, $entity)
     {
@@ -350,6 +365,7 @@ trait CrudController
      * Checks if user is authorized to destroy the entity.
      * @param Request $request
      * @param $entity
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     protected function authorizeDestroy(Request $request, $entity)
     {
@@ -360,6 +376,7 @@ trait CrudController
      * @param $action
      * @param null $entity
      * @param null $subject
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     protected function authorizeCrudRequest($action, $entity = null, $subject = null)
     {
