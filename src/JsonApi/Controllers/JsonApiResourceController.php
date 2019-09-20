@@ -1,13 +1,16 @@
 <?php
 
 
-namespace CatLab\Charon\Laravel\Controllers;
+namespace CatLab\Charon\Laravel\JsonApi\Controllers;
 
 use CatLab\Base\Helpers\ArrayHelper;
+use CatLab\Charon\Collections\RouteCollection;
 use CatLab\Charon\Enums\Action;
+use CatLab\Charon\Laravel\Controllers\ResourceController;
+use CatLab\Charon\Laravel\JsonApi\InputParsers\JsonApiInputParser;
 use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
 use CatLab\Charon\Laravel\InputParsers\PostInputParser;
-use CatLab\Charon\Laravel\Models\JsonApiResponse;
+use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResponse;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Laravel\Resolvers\JsonApiRequestResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
@@ -28,6 +31,39 @@ use Illuminate\Support\Facades\Response;
 trait JsonApiResourceController
 {
     use ResourceController;
+
+    /**
+     * @param RouteCollection $routes
+     * @param $resourceDefinition
+     * @param $path
+     * @param $resourceId
+     * @param null $controller
+     * @return RouteCollection
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     */
+    public static function setJsonApiRoutes(
+        RouteCollection $routes,
+        $resourceDefinition,
+        $path,
+        $resourceId,
+        $controller = null
+    ) {
+        if (!isset($controller)) {
+            $controller = class_basename(static::class);
+        }
+
+        $childResource = $routes->resource(
+            $resourceDefinition,
+            $path,
+            $controller,
+            [
+                'id' => $resourceId,
+                'only' => [ 'index', 'view', 'store', 'patch', 'destroy' ]
+            ]
+        );
+
+        return $childResource;
+    }
 
     /**
      * @param $data
@@ -155,8 +191,7 @@ trait JsonApiResourceController
 
         $context->addProcessor(new PaginationProcessor(PaginationBuilder::class));
 
-        $context->addInputParser(JsonBodyInputParser::class);
-        $context->addInputParser(PostInputParser::class);
+        $context->addInputParser(JsonApiInputParser::class);
 
         $context->setUrl(Request::url());
 

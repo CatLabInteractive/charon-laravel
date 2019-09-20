@@ -1,8 +1,10 @@
 <?php
 
-namespace CatLab\Charon\Laravel\Models;
+namespace CatLab\Charon\Laravel\JsonApi\Models;
 
+use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Interfaces\ResourceCollection;
+use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Models\Values\Base\RelationshipValue;
 use CatLab\Charon\Models\Values\ChildValue;
@@ -17,9 +19,20 @@ use CatLab\Charon\Models\Values\PropertyValue;
  */
 class JsonApiResponse extends ResourceResponse
 {
+    /**
+     * @var
+     */
     private $output;
 
+    /**
+     * @var
+     */
     private $alreadyIncluded;
+
+    /**
+     * @var RESTResource[]
+     */
+    private $included = [];
 
     /**
      * @return mixed
@@ -43,6 +56,14 @@ class JsonApiResponse extends ResourceResponse
         $resource = $this->getResource();
         $this->addResources($resource);
 
+        // Finally, also add all included elements
+        while (count($this->included) > 0) {
+            // note that 'addIncluded' will add elements to $this->included
+            // so we need to use this while instead of an iterator.
+            $included = array_shift($this->included);
+            $this->addIncluded($included);
+        }
+
         return $this->output;
     }
 
@@ -52,20 +73,37 @@ class JsonApiResponse extends ResourceResponse
 
             foreach ($resource as $r) {
                 /** @var RESTResource $r */
-                $this->addResource($r);
+                $this->touchIncluded($r);
+                $this->output['data'][] = $this->encodeResource($r);
             }
             $this->output['meta'] = $resource->getMeta();
 
+        } else {
+            /** @var RESTResource $resource */
+            $this->touchIncluded($resource);
+            $this->output['data'] = $this->encodeResource($resource);
+            //$this->output['meta'] = $resource->getMeta();
         }
     }
 
     /**
-     * @param RESTResource $resource
+     * Touch resource.
+     * @param $resource
+     * @return bool TRUE if this resource is new, FALSE if it existed already
      */
-    protected function addResource(RESTResource $resource)
+    protected function touchIncluded(RESTResource $resource)
     {
-        $this->output['data'][] = $this->encodeResource($resource);
+        $type = $resource->getType();
+        $id = $this->getIdentifier($resource);
+
+        if (isset($this->alreadyIncluded[$type . '.' . $id])) {
+            return false;
+        }
+
+        $this->alreadyIncluded[$type . '.' . $id] = true;
+        return true;
     }
+
 
     /**
      * @param RESTResource $resource
@@ -85,20 +123,30 @@ class JsonApiResponse extends ResourceResponse
                 $data['attributes'][$property->getField()->getDisplayName()] = $property->getValue();
             } elseif ($property instanceof RelationshipValue) {
                 if ($property instanceof ChildValue) {
-                    $this->addIncluded($property->getChild());
                     $data['relationships'][$property->getField()->getDisplayName()] = [
-                        'id' => $this->getIdentifier($property->getChild()),
-                        'type' => $property->getChild()->getType()
+                        'data' => [
+                            'id' => $this->getIdentifier($property->getChild()),
+                            'type' => $property->getChild()->getType()
+                        ]
                     ];
-                } else {
-                    $data['relationships'][$property->getField()->getDisplayName()] = [];
-                    foreach ($property->getChildren() as $child) {
-                        $this->addIncluded($child);
 
-                        $data['relationships'][$property->getField()->getDisplayName()] = [
+                    if ($property->getField()->getExpandContext() !== Action::IDENTIFIER) {
+                        $this->included[] = $property->getChild();
+                    }
+
+                } else {
+                    $data['relationships'][$property->getField()->getDisplayName()] = [
+                        'data' => []
+                    ];
+                    foreach ($property->getChildren() as $child) {
+                        $data['relationships'][$property->getField()->getDisplayName()]['data'][] = [
                             'id' => $this->getIdentifier($child),
                             'type' => $child->getType()
                         ];
+
+                        if ($property->getField()->getExpandContext() !== Action::IDENTIFIER) {
+                            $this->included[] = $child;
+                        }
                     }
                 }
             }
@@ -112,14 +160,10 @@ class JsonApiResponse extends ResourceResponse
      */
     protected function addIncluded(RESTResource $resource)
     {
-        $type = $resource->getType();
-        $id = $this->getIdentifier($resource);
-
-        if (isset($this->alreadyIncluded[$type . '.' . $id])) {
+        if (!$this->touchIncluded($resource)) {
             return;
         }
 
-        $this->alreadyIncluded[$type . '.' . $id] = true;
         $this->output['included'][]  = $this->encodeResource($resource);
     }
 
