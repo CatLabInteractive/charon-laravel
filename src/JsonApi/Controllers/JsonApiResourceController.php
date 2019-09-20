@@ -6,10 +6,13 @@ namespace CatLab\Charon\Laravel\JsonApi\Controllers;
 use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Collections\RouteCollection;
 use CatLab\Charon\Enums\Action;
+use CatLab\Charon\Factories\ResourceFactory;
 use CatLab\Charon\Laravel\Controllers\ResourceController;
 use CatLab\Charon\Laravel\JsonApi\InputParsers\JsonApiInputParser;
 use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
 use CatLab\Charon\Laravel\InputParsers\PostInputParser;
+use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResource;
+use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResourceCollection;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResponse;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Laravel\Resolvers\JsonApiRequestResolver;
@@ -221,7 +224,8 @@ trait JsonApiResourceController
         return new ResourceTransformer(
             new PropertyResolver(),
             new PropertySetter(),
-            new JsonApiRequestResolver()
+            new JsonApiRequestResolver(),
+            new ResourceFactory(JsonApiResource::class, JsonApiResourceCollection::class)
         );
     }
 }
