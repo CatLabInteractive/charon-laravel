@@ -36,7 +36,7 @@ class JsonApiRequestResolver extends RequestResolver
      */
     public function getRecords($request)
     {
-        return $this->getParameter($request, ResourceTransformer::LIMIT_PARAMETER);
+        return $this->getPageParameter($request, 'size');
     }
 
     /**

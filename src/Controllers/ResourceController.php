@@ -385,9 +385,9 @@ trait ResourceController
      */
     protected function getRecordLimit()
     {
-        $records = Request::input('records', 10);
-        if (!is_numeric($records)) {
-            $records = 10;
+        $records = $this->getResourceTransformer()->getRequestResolver()->getRecords(Request::instance());
+        if (!$records) {
+            return 10;
         }
         return $records;
     }
