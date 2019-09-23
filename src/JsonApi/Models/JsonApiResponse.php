@@ -119,7 +119,7 @@ class JsonApiResponse extends ResourceResponse
         ];
 
         foreach ($resource->getProperties()->toArray() as $property) {
-            if ($property instanceof PropertyValue) {
+            if ($property instanceof PropertyValue && $property->isVisible()) {
                 $data['attributes'][$property->getField()->getDisplayName()] = $property->getValue();
             } elseif ($property instanceof RelationshipValue) {
                 if ($property instanceof ChildValue) {
