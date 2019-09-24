@@ -2,8 +2,11 @@
 
 namespace CatLab\Charon\Laravel\Database;
 
-use CatLab\Charon\Laravel\PropertySetterException;
+use CatLab\Base\Helpers\StringHelper;
+use CatLab\Charon\Laravel\Exceptions\PropertySetterException;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
  * Class Model
@@ -38,6 +41,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
     /**
      * Save all related entities.
      * @throws PropertySetterException
+     * @throws \Exception
      */
     protected function saveTheChildren()
     {
@@ -45,13 +49,22 @@ class Model extends \Illuminate\Database\Eloquent\Model
 
         if (isset($this->addedChildren)) {
             foreach ($this->addedChildren as $relation => $children) {
-                $relationship = call_user_func([ $this, $relation ]);
-                if ($relationship instanceof HasMany) {
-                    $relationship->saveMany($children);
+
+                // Look for magic method
+                $magicMethod = 'saveMany' . Str::ucfirst($relation);
+                if (method_exists($this, $magicMethod)) {
+                    call_user_func([ $this, $magicMethod], $children);
                 } else {
-                    throw new PropertySetterException(
-                        "Relationship " . get_class($relationship) . " is not implemented yet."
-                    );
+                    $relationship = call_user_func([$this, $relation]);
+                    if ($relationship instanceof HasMany) {
+                        $relationship->saveMany($children);
+                    } else if ($relationship instanceof BelongsToMany) {
+                        $relationship->saveMany($children);
+                    } else {
+                        throw new PropertySetterException(
+                            "Relationship " . get_class($relationship) . " is not implemented yet."
+                        );
+                    }
                 }
 
                 // Also save the children
@@ -67,14 +80,19 @@ class Model extends \Illuminate\Database\Eloquent\Model
 
         if (isset($this->removedChildren)) {
             foreach ($this->removedChildren as $relation => $children) {
-                $relationship = call_user_func([ $this, $relation ]);
 
-                if ($relationship instanceof HasMany) {
+                $relationship = call_user_func([$this, $relation]);
 
+                if ($relationship instanceof BelongsToMany) {
+                    $ids = [];
+                    foreach ($children as $child) {
+                        $ids[][$child->primaryKey] = $child->{$child->primaryKey};
+                    }
+                    $relationship->detach($ids);
+                } elseif ($relationship instanceof HasMany) {
                     foreach ($children as $child) {
                         $child->delete();
                     }
-
                 } else {
                     throw new PropertySetterException(
                         "Relationship " . get_class($relationship) . " is not implemented yet."

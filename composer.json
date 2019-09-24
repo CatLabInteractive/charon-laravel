@@ -26,5 +26,12 @@
         "psr-4": {
             "Tests\\Petstore\\": "tests/Petstore"
         }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "CatLab\\Charon\\Laravel\\RESTResourceProvider"
+            ]
+        }
     }
 }
