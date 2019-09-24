@@ -30,6 +30,9 @@ abstract class AbstractMiddleware
             case 'path':
                 return $request->route($name);
 
+            case 'body':
+                return $request->getContent();
+
             default:
                 throw new \InvalidArgumentException(
                     get_class($this) . " doesn't know how to handle '" . $in . "' parameters"

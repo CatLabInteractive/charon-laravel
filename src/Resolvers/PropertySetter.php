@@ -134,6 +134,8 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      * @param PropertyValueCollection[] $identifiers
      * @param Context $context
      * @return mixed
+     * @throws InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
     public function removeAllChildrenExcept(
         ResourceTransformer $transformer,
