@@ -29,7 +29,7 @@ trait CrudController
     /*
      * Required methods
      */
-    abstract function getResourceResponse($data, \CatLab\Charon\Models\Context $context  = null);
+    abstract function getResourceResponse($data, \CatLab\Charon\Interfaces\Context $context  = null);
 
     abstract function getContext($action = Action::VIEW, $parameters = []) : \CatLab\Charon\Interfaces\Context;
     abstract function getResourceDefinition(): ResourceDefinition;
