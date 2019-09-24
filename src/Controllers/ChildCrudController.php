@@ -57,13 +57,17 @@ trait ChildCrudController
 
     /**
      * Called before saveEntity
+     * @param Request $request
      * @param \Illuminate\Database\Eloquent\Model $entity
+     * @param bool $isNew
      */
-    protected function beforeSaveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity)
+    protected function beforeSaveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity, $isNew = false)
     {
-        $relationship = $this->getRelationship($request);
-        if ($relationship instanceof HasMany) {
-            $this->getInverseRelationship($entity)->associate($this->getParent($request));
+        if ($isNew) {
+            $relationship = $this->getRelationship($request);
+            if ($relationship instanceof HasMany) {
+                $this->getInverseRelationship($entity)->associate($this->getParent($request));
+            }
         }
     }
 
