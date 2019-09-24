@@ -17,7 +17,7 @@ use CatLab\Charon\Laravel\Resolvers\JsonApiRequestResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
 use CatLab\Charon\Laravel\Transformers\ResourceTransformer;
-use CatLab\Charon\Interfaces\Context;
+use CatLab\Charon\Models\Context;
 use CatLab\Charon\Pagination\PaginationBuilder;
 use CatLab\Charon\Processors\PaginationProcessor;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
@@ -71,7 +71,7 @@ trait JsonApiResourceController
      * @param \CatLab\Charon\Interfaces\Context|null $context
      * @return ResourceResponse
      */
-    protected function getResourceResponse($data, Context $context  = null)
+    protected function getResourceResponse($data, \CatLab\Charon\Interfaces\Context $context  = null)
     {
         return new JsonApiResponse($data, $context);
     }

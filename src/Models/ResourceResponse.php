@@ -3,7 +3,7 @@
 namespace CatLab\Charon\Laravel\Models;
 
 use CatLab\Charon\Interfaces\SerializableResource;
-use CatLab\Charon\Models\Context;
+use CatLab\Charon\Interfaces\Context;
 use Illuminate\Http\ResponseTrait;
 use Symfony\Component\HttpFoundation\Response;
 
