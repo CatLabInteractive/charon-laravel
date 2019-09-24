@@ -9,8 +9,6 @@ use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Factories\ResourceFactory;
 use CatLab\Charon\Laravel\Controllers\ResourceController;
 use CatLab\Charon\Laravel\JsonApi\InputParsers\JsonApiInputParser;
-use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
-use CatLab\Charon\Laravel\InputParsers\PostInputParser;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResource;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResourceCollection;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResponse;
