@@ -50,7 +50,7 @@ class ResourceToOutput
      */
     protected function toJSON(ResourceResponse $response)
     {
-        return \Response::json($response->getResource()->toArray(), $response->getStatusCode());
+        return \Response::json($response->getResource()->toArray(), $response->getStatusCode(), [], JSON_UNESCAPED_SLASHES);
     }
 
     /**
