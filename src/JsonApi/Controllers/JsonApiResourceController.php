@@ -6,6 +6,7 @@ namespace CatLab\Charon\Laravel\JsonApi\Controllers;
 use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Collections\RouteCollection;
 use CatLab\Charon\Enums\Action;
+use CatLab\Charon\Enums\Cardinality;
 use CatLab\Charon\Factories\ResourceFactory;
 use CatLab\Charon\Laravel\Controllers\ResourceController;
 use CatLab\Charon\Laravel\JsonApi\InputParsers\JsonApiInputParser;
@@ -17,7 +18,9 @@ use CatLab\Charon\Laravel\Resolvers\JsonApiRequestResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
 use CatLab\Charon\Laravel\Transformers\ResourceTransformer;
+use CatLab\Charon\Library\ResourceDefinitionLibrary;
 use CatLab\Charon\Models\Context;
+use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Pagination\PaginationBuilder;
 use CatLab\Charon\Processors\PaginationProcessor;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
@@ -63,7 +66,112 @@ trait JsonApiResourceController
             ]
         );
 
+        // we need to create a ResourceDefinition object to create the 'linkable' endpoints
+        $resourceDefinition = ResourceDefinitionLibrary::make($resourceDefinition);
+        foreach ($resourceDefinition->getFields()->getRelationships() as $field)  {
+            self::addLinkRelationshipEndpoint($childResource, $field, $path, $resourceId, $controller);
+        }
+
         return $childResource;
+    }
+
+    /**
+     * @param RouteCollection $routes
+     * @param RelationshipField $field
+     * @param $path
+     * @param $resourceId
+     * @param null $controller
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     */
+    protected static function addLinkRelationshipEndpoint(
+        RouteCollection $routes,
+        RelationshipField $field,
+        $path,
+        $resourceId,
+        $controller = null
+    ) {
+
+        $resourceDefinition = ResourceDefinitionLibrary::make($field->getResourceDefinition());
+
+        $routes->get($path . '/{' . $resourceId . '}/relationships/' . $field->getDisplayName(), $controller . '@viewRelationship')
+            ->summary(function () use ($field, $resourceDefinition) {
+                $entityName = $resourceDefinition->getEntityName(false);
+
+                if ($field->getCardinality() === Cardinality::MANY) {
+                    $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
+                    return 'View all ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' of a ' . $entityName;
+                } else {
+                    $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(false);
+                    return 'View the ' . $field->getDisplayName()  . ' ' . $relatedEntityName . ' of a ' . $entityName;
+                }
+            })
+            ->parameters()->path($resourceId)->string()->required()
+            ->returns()->statusCode(200)->one(get_class($field->getResourceDefinition()));
+
+        /*
+         * Can we link existing items to this entity?
+         */
+        if ($field->canLinkExistingEntities()) {
+
+            // Replace the relationship with a completely new list.
+            $routes->patch($path . '/{' . $resourceId . '}/relationships/' . $field->getDisplayName(), $controller . '@updateRelationship')
+                ->summary(function () use ($field, $resourceDefinition) {
+                    $entityName = $resourceDefinition->getEntityName(false);
+
+                    if ($field->getCardinality() === Cardinality::MANY) {
+                        $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
+                        return 'Replace all ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' of a ' . $entityName;
+                    } else {
+                        $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(false);
+                        return 'Replace the ' . $field->getDisplayName()  . ' ' . $relatedEntityName . ' of a ' . $entityName;
+                    }
+                })
+                ->parameters()->path($resourceId)->string()->required()
+                ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)
+                ->returns()->statusCode(200)->one(get_class($field->getResourceDefinition()));
+
+            // POST relationship
+            if ($field->getCardinality() === Cardinality::MANY) {
+                $routes->post($path . '/{' . $resourceId . '}/relationships/' . $field->getDisplayName(), $controller . '@addToRelationship')
+                    ->summary(function () use ($field, $resourceDefinition) {
+                        $entityName = $resourceDefinition->getEntityName(false);
+
+                        $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
+                        return 'Add ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' to a ' . $entityName;
+                    })
+                    ->parameters()->path($resourceId)->string()->required()
+                    ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
+                    ->returns()->statusCode(200)->one(get_class($field->getResourceDefinition()));
+
+                $routes->delete($path . '/{' . $resourceId . '}/relationships/' . $field->getDisplayName(), $controller . '@addToRelationship')
+                    ->summary(function () use ($field, $resourceDefinition) {
+                        $entityName = $resourceDefinition->getEntityName(false);
+
+                        $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
+                        return 'Remove a ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' from a ' . $entityName;
+                    })
+                    ->parameters()->path($resourceId)->string()->required()
+                    ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
+                    ->returns()->statusCode(200)->one(get_class($field->getResourceDefinition()));
+            }
+        }
+
+        // @todo we should probably also be able to create resources.
+    }
+
+    public function viewRelationship($resourceId, $relationshipDisplayName)
+    {
+
+    }
+
+    public function updateRelationship($resourceId, $relationshipDisplayName)
+    {
+
+    }
+
+    public function addToRelationship($resourceId, $relationshipDisplayName)
+    {
+
     }
 
     /**

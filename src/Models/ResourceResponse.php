@@ -69,18 +69,14 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
      */
     public function sendContent()
     {
-        header('Content-type: application/json');
-
-        echo $this->getOutput();
+        echo $this->getContent();
         return $this;
     }
 
     /**
-     * Sends content for the current web response.
-     *
-     * @return string
+     * @return false|string
      */
-    public function getOutput()
+    public function getContent()
     {
         if (!isset($this->output)) {
             $this->output = $this->encode();

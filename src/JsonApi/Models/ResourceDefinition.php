@@ -33,6 +33,11 @@ abstract class ResourceDefinition extends \CatLab\Charon\Models\ResourceDefiniti
             'type' => 'string'
         ];
 
+        // Identifier context doesn't need anything else.
+        if (Action::isIdentifierContext($action)) {
+            return $out;
+        }
+
         $out['properties']['attributes'] = [
             'type' => 'object',
             'properties' => []

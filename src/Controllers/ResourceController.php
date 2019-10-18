@@ -415,11 +415,17 @@ trait ResourceController
     /**
      * Take one or multiple models and transform them into one or multiple resources.
      * Notice: When non-model content is found, it is returned "as-is".
-     * @deprecated Use toResources() or toResource().
      * @param Model|Model[] $models
      * @param Context $context
      * @param null $resourceDefinition
      * @return RESTResource|RESTResource[]|mixed
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
+     * @deprecated Use toResources() or toResource().
      */
     protected function modelsToResources($models, Context $context, $resourceDefinition = null)
     {

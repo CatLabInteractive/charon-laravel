@@ -3,7 +3,9 @@
 namespace CatLab\Charon\Laravel\JsonApi\Models;
 
 use CatLab\Charon\Enums\Action;
+use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceCollection;
+use CatLab\Charon\Interfaces\SerializableResource;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Models\Values\Base\RelationshipValue;
@@ -33,6 +35,12 @@ class JsonApiResponse extends ResourceResponse
      * @var RESTResource[]
      */
     private $included = [];
+
+    public function __construct(SerializableResource $resource, Context $context = null, $status = 200, $headers = [])
+    {
+        $headers['Content-type'] = 'application/vnd.api+json';
+        parent::__construct($resource, $context, $status, $headers);
+    }
 
     /**
      * @return mixed
