@@ -8,7 +8,7 @@ use CatLab\Charon\Exceptions\ResourceException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
 use CatLab\Charon\Laravel\Database\Model;
-use CatLab\Charon\Laravel\Exceptions\EntityNotFoundException;
+use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
