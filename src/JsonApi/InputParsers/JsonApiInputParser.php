@@ -120,7 +120,14 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
 
         $resourceCollection = $resourceTransformer->getResourceFactory()->createResourceCollection();
 
-        $modelInput = $content['data']['attributes'];
+        $modelInput = [];
+        if (isset($content['data']['attributes'])) {
+            $modelInput = $content['data']['attributes'];
+        }
+
+        if (isset($content['data']['id'])) {
+            $modelInput['id'] = $content['data']['id'];
+        }
 
         // our system handles relationships in the same way as attributes, so...
         if (isset($content['data']['relationships'])) {
