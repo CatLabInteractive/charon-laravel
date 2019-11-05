@@ -36,8 +36,9 @@ use Illuminate\Support\Facades\Response;
  */
 trait JsonApiResourceController
 {
-    use ResourceController;
-    use CrudController;
+    use ResourceController, CrudController {
+        CrudController::getRequest insteadof ResourceController;
+    }
 
     /**
      * @param RouteCollection $routes
