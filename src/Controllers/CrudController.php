@@ -11,7 +11,10 @@ use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Models\RESTResource;
+use CatLab\Requirements\Exceptions\RequirementValidationException;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
+use CatLab\Requirements\Exceptions\ValidationException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,9 +32,9 @@ trait CrudController
     /*
      * Required methods
      */
-    abstract function getResourceResponse($data, \CatLab\Charon\Interfaces\Context $context  = null);
+    abstract function getResourceResponse($data, Context $context  = null);
 
-    abstract function getContext($action = Action::VIEW, $parameters = []) : \CatLab\Charon\Interfaces\Context;
+    abstract function getContext($action = Action::VIEW, $parameters = []) : Context;
     abstract function getResourceDefinition(): ResourceDefinition;
 
     abstract function getModels($queryBuilder, Context $context, $resourceDefinition = null, $records = null);
@@ -71,7 +74,7 @@ trait CrudController
     /**
      * @param Request $request
      * @return Response
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function index(Request $request)
     {
@@ -90,7 +93,7 @@ trait CrudController
      * View an entity
      * @param Request $request
      * @return Response
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function view(Request $request)
     {
@@ -106,8 +109,9 @@ trait CrudController
      * Create a new entity
      * @param Request $request
      * @return Response
-     * @throws \CatLab\Requirements\Exceptions\RequirementValidationException
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws RequirementValidationException
+     * @throws AuthorizationException
+     * @throws ValidationException
      */
     public function store(Request $request)
     {
@@ -137,9 +141,9 @@ trait CrudController
      * @param Request $request
      * @return ResourceResponse
      * @throws EntityNotFoundException
-     * @return \CatLab\Charon\Laravel\Models\ResourceResponse
-     * @throws \CatLab\Requirements\Exceptions\RequirementValidationException
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws RequirementValidationException
+     * @throws AuthorizationException*@throws \CatLab\Requirements\Exceptions\ValidationException
+     * @throws ValidationException
      */
     public function edit(Request $request)
     {
@@ -173,7 +177,7 @@ trait CrudController
     /**
      * @param Request $request
      * @return mixed
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function destroy(Request $request)
     {
@@ -193,7 +197,7 @@ trait CrudController
     /**
      *
      * @param $entity
-     * @return \CatLab\Charon\Laravel\Models\ResourceResponse
+     * @return ResourceResponse
      */
     protected function createViewEntityResponse($entity)
     {
@@ -274,7 +278,7 @@ trait CrudController
             return $this->request;
         }
 
-        if (method_exists(\Illuminate\Http\Request::class, 'instance')) {
+        if (method_exists(Request::class, 'instance')) {
             return \Request::instance();
         } else {
             return \Request::getInstance();
@@ -325,7 +329,7 @@ trait CrudController
     /**
      * Checks if user is authorized to watch an index of the entities.
      * @param Request $request
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     protected function authorizeIndex(Request $request)
     {
@@ -335,7 +339,7 @@ trait CrudController
     /**
      * Checks if user is authorized to create an entity.
      * @param Request $request
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     protected function authorizeCreate(Request $request)
     {
@@ -346,7 +350,7 @@ trait CrudController
      * Checks if user is authorized to view an entity.
      * @param Request $request
      * @param $entity
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     protected function authorizeView(Request $request, $entity)
     {
@@ -357,7 +361,7 @@ trait CrudController
      * Checks if user is authorized to edit the entity.
      * @param Request $request
      * @param $entity
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     protected function authorizeEdit(Request $request, $entity)
     {
@@ -368,7 +372,7 @@ trait CrudController
      * Checks if user is authorized to destroy the entity.
      * @param Request $request
      * @param $entity
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     protected function authorizeDestroy(Request $request, $entity)
     {
@@ -379,7 +383,7 @@ trait CrudController
      * @param $action
      * @param null $entity
      * @param null $subject
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     protected function authorizeCrudRequest($action, $entity = null, $subject = null)
     {

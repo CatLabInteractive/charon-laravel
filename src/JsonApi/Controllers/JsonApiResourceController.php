@@ -7,7 +7,9 @@ use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Collections\RouteCollection;
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Enums\Cardinality;
+use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Factories\ResourceFactory;
+use CatLab\Charon\Laravel\Controllers\CrudController;
 use CatLab\Charon\Laravel\Controllers\ResourceController;
 use CatLab\Charon\Laravel\JsonApi\InputParsers\JsonApiInputParser;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResource;
@@ -35,6 +37,7 @@ use Illuminate\Support\Facades\Response;
 trait JsonApiResourceController
 {
     use ResourceController;
+    use CrudController;
 
     /**
      * @param RouteCollection $routes
@@ -164,9 +167,46 @@ trait JsonApiResourceController
 
     }
 
-    public function updateRelationship($resourceId, $relationshipDisplayName)
-    {
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @param $resourceId
+     * @param $relationshipDisplayName
+     * @throws EntityNotFoundException
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function updateRelationship(
+        \Illuminate\Http\Request $request,
+        $resourceId,
+        $relationshipDisplayName
+    ) {
+        $this->request = $request;
 
+        $entity = $this->findEntity($request);
+        if (!$entity) {
+            throw new EntityNotFoundException('Could not find entity with id ' . $entity->id);
+        }
+
+        $this->authorizeEdit($request, $entity);
+
+        /*
+
+        $writeContext = $this->getContext(Action::EDIT);
+        $inputResource = $this->bodyToResource($writeContext);
+
+        try {
+            $inputResource->validate($writeContext, $entity);
+        } catch (ResourceValidationException $e) {
+            return $this->getValidationErrorResponse($e);
+        }
+
+        $entity = $this->toEntity($inputResource, $writeContext, $entity);
+
+        // Save the entity
+        $this->saveEntity($request, $entity);
+
+        // Turn back into a resource
+        return $this->createViewEntityResponse($entity);
+        */
     }
 
     public function addToRelationship($resourceId, $relationshipDisplayName)
