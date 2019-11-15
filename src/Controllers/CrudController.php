@@ -65,7 +65,7 @@ trait CrudController
     public function __construct()
     {
         if (!defined('static::RESOURCE_DEFINITION')) {
-            throw new ResourceException("All classes using CrudController must define a constant called RESOURCE_DEFINITION");
+            throw new ResourceException("All classes using CrudController must define a constant called RESOURCE_DEFINITION. " . get_class($this) . ' does not have this constant.');
         }
 
         parent::__construct(static::RESOURCE_DEFINITION);
@@ -134,7 +134,7 @@ trait CrudController
         $this->saveEntity($request, $entity);
 
         // Turn back into a resource
-        return $this->createViewEntityResponse($entity);
+        return $this->createViewEntityResponse($entity)->setStatusCode(201);
     }
 
     /**
@@ -294,7 +294,6 @@ trait CrudController
         $isNew = !$entity->exists;
 
         $this->beforeSaveEntity($request, $entity, $isNew);
-
         if ($entity instanceof Model) {
             $entity->saveRecursively();
         } else {

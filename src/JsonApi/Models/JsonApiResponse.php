@@ -182,7 +182,7 @@ class JsonApiResponse extends ResourceResponse
     protected function getIdentifier(RESTResource $resource)
     {
         $identifiers = array_map(function(PropertyValue $v) {
-            return $v->getValue();
+            return (string) $v->getValue();
         }, $resource->getIdentifiers()->getValues());
 
         if (count($identifiers) === 1) {

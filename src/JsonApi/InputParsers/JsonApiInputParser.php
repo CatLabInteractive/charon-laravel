@@ -135,9 +135,10 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
                 if (!isset($relationshipContent['data'])) {
                     continue;
                 }
-                $modelInput[$relationshipName] = [
-                    'id' => $relationshipContent['data']['id']
-                ];
+
+                if ($related = $this->getRelationshipContent($relationshipContent)) { // variable assignment in if stagement
+                    $modelInput[$relationshipName] = $related;
+                }
             }
         }
 
@@ -149,5 +150,41 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
         $resourceCollection->add($resource);
 
         return $resourceCollection;
+    }
+
+    /**
+     * @param $relationshipContent
+     * @return array|null
+     */
+    protected function getRelationshipContent($relationshipContent)
+    {
+        // is one related resource?
+        if (ArrayHelper::isAssociative($relationshipContent['data'])) {
+            return $this->getRelatedIdentifier($relationshipContent['data']);
+        } else {
+            // we have multiple related entities
+            $out = [];
+            foreach ($relationshipContent['data'] as $relatedResource) {
+                if ($related = $this->getRelatedIdentifier($relatedResource)) { // variable assignment in if stagement
+                    $out[] = $related;
+                }
+            }
+            return [ ResourceTransformer::RELATIONSHIP_ITEMS => $out ];
+        }
+    }
+
+    /**
+     * @param $relatedContent
+     * @return array|null
+     */
+    protected function getRelatedIdentifier($relatedContent)
+    {
+        if (!isset($relatedContent['id'])) {
+            return null;
+        }
+
+        return [
+            'id' => $relatedContent['id']
+        ];
     }
 }

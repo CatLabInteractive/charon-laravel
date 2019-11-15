@@ -30,6 +30,8 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
      */
     protected function getValueFromEntity($entity, $name, array $getterParameters)
     {
+        /** @var Model $entity */
+
         // Check for get method
         if ($this->methodExists($entity, 'get'.ucfirst($name))) {
             return call_user_func_array(array($entity, 'get'.ucfirst($name)), $getterParameters);
@@ -44,7 +46,6 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             ) {
                 return $entity->$name;
             } else {
-
                 $child = call_user_func_array(array($entity, $name), $getterParameters);
 
                 if ($child instanceof BelongsTo) {
@@ -142,8 +143,8 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
         if ($entities instanceof Relation) {
             // Clone to avoid setting multiple filters
             $entities = clone $entities;
-            foreach ($identifiers->toMap() as $k => $v) {
-                $entities->where($k, $v);
+            foreach ($identifiers as $k => $v) {
+                $entities->where($this->getQualifiedName($k), $v->getValue());
             }
 
             $entity = $entities->get()->first();
