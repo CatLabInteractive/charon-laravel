@@ -354,21 +354,18 @@ trait JsonApiResourceController
      */
     protected function getValidationErrorResponse(ResourceValidationException $e)
     {
-        $details = [];
+        $errors = [];
         foreach ($e->getMessages()->toMap() as $v) {
             foreach ($v as $vv) {
-                $details[] = $vv;
+
+                $errors[] = [
+                    'title' => 'Could not decode resource.',
+                    'detail' => $vv
+                ];
             }
         }
 
-        return Response::json([
-            'errors' => [
-                [
-                    'title' => 'Could not decode resource.',
-                    'detail' => $details
-                ]
-            ]
-        ])
+        return Response::json([ 'errors' => $errors ])
             ->header('Content-type', 'application/vnd.api+json')
             ->setStatusCode(422);
     }
