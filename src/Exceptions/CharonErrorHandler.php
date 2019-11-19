@@ -27,7 +27,7 @@ class CharonErrorHandler
         switch (get_class($exception)) {
 
             case EntityNotFoundException::class:
-                return $this->jsonResponse($exception->getMessage(), null, 404);
+                return $this->jsonResponse('Resource not found', $exception->getMessage(), 404);
 
             case NoInputDataFound::class:
                 return $this->jsonResponse($exception->getMessage(), null, 400);

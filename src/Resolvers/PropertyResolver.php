@@ -2,10 +2,13 @@
 
 namespace CatLab\Charon\Laravel\Resolvers;
 
+use CatLab\Base\Enum\Operator;
+use CatLab\Base\Interfaces\Database\SelectQueryParameters;
 use CatLab\Charon\Collections\PropertyValueCollection;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Exceptions\InvalidPropertyException;
 use CatLab\Charon\Interfaces\Context;
+use CatLab\Charon\Interfaces\ResourceDefinition;
 use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Models\Properties\Base\Field;
 use CatLab\Charon\Models\Properties\RelationshipField;
