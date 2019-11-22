@@ -12,7 +12,7 @@ use CatLab\Laravel\Database\SelectQueryTransformer;
 class ResourceTransformer extends \CatLab\Charon\ResourceTransformer
 {
     /**
-     * Apply processor filters (= filters that are created by processors) and translate them to the system specific
+     * Apply processor filters (= filters that are created by processors) and translate them to the framework specific
      * query builder.
      * @param $queryBuilder
      * @param SelectQueryParameters $parameters
