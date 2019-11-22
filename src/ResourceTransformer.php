@@ -18,7 +18,7 @@ class ResourceTransformer extends \CatLab\Charon\ResourceTransformer
      * @param SelectQueryParameters $parameters
      * @return void
      */
-    protected function applyProcessorFilters($queryBuilder, SelectQueryParameters $parameters)
+    public function applyProcessorFilters($queryBuilder, SelectQueryParameters $parameters)
     {
         // Apply the catlab query parameters to the laravel query builder.
         $selectQueryTransformer = new SelectQueryTransformer();
