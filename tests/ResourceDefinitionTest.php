@@ -1,6 +1,8 @@
 <?php
 
-class ResourceDefinitionTest extends PHPUnit_Framework_TestCase
+namespace CatLab\Charon\ResourceTransformers\Tests;
+
+class ResourceDefinitionTest extends BaseTest
 {
     /**
      *

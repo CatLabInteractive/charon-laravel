@@ -4,7 +4,7 @@ namespace CatLab\Charon\Laravel;
 
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
-use CatLab\Charon\Laravel\Transformers\ResourceTransformer;
+use CatLab\Charon\Laravel\ResourceTransformer;
 use Illuminate\Support\ServiceProvider;
 
 /**

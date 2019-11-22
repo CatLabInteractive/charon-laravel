@@ -1,6 +1,6 @@
 <?php
 
-namespace CatLab\RESTResource\Tests;
+namespace CatLab\Charon\ResourceTransformers\Tests;
 
 use Tests\Petstore\Definitions\PetDefinition;
 use Tests\Petstore\Definitions\PetDefinitionWithDate;
@@ -9,7 +9,7 @@ use Tests\Petstore\Models\Pet;
 use Tests\Petstore\Models\Photo;
 use Tests\Petstore\Models\Tag;
 use CatLab\Charon\Enums\Action;
-use CatLab\Charon\Laravel\Transformers\ResourceTransformer;
+use CatLab\Charon\Laravel\ResourceTransformer;
 use CatLab\Charon\Models\Context;
 
 use PHPUnit_Framework_TestCase;
@@ -18,7 +18,7 @@ use PHPUnit_Framework_TestCase;
  * Class PetstoreTest
  * @package CatLab\RESTResource\Tests
  */
-class PetstoreTest extends PHPUnit_Framework_TestCase
+class PetstoreTest extends BaseTest
 {
     /**
      *

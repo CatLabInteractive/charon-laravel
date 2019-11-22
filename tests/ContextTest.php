@@ -1,6 +1,6 @@
 <?php
 
-namespace CatLab\RESTResource\Tests;
+namespace CatLab\Charon\ResourceTransformers\Tests;
 
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Models\Context;
@@ -12,7 +12,7 @@ use PHPUnit_Framework_TestCase;
  * Class ContextTest
  * @package CatLab\RESTResource\Tests
  */
-class ContextTest extends PHPUnit_Framework_TestCase
+class ContextTest extends BaseTest
 {
     /**
      *

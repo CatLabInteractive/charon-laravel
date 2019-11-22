@@ -21,7 +21,7 @@ use CatLab\Charon\Interfaces\ResourceTransformer as ResourceTransformerContract;
 
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
-use CatLab\Charon\Laravel\Transformers\ResourceTransformer;
+use CatLab\Charon\Laravel\ResourceTransformer;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Database\Eloquent\Builder;
@@ -69,42 +69,41 @@ trait ResourceController
 
     /**
      * @deprecated Use getModels()
-     * @param $model
+     * @param $queryBuilder
      * @param $resourceDefinition
      * @param Context $context
      * @param int $records
      * @return mixed
      */
-    public function filterAndGet($model, $resourceDefinition, Context $context, $records = null)
+    public function filterAndGet($queryBuilder, $resourceDefinition, Context $context, $records = null)
     {
         if (!isset($records)) {
             $records = $this->getRecordLimit();
         }
 
-        $filter = $this->resourceTransformer->getFilters(
-            Request::query(),
+        $filters = $this->resourceTransformer->getFilters(
+            $this->getRequest()->query(),
             $resourceDefinition,
             $context,
+            $queryBuilder,
             $records
         );
 
-        // Translate parameters to larevel query
-        $selectQueryTransformer = new SelectQueryTransformer();
-        $selectQueryTransformer->toLaravel($model, $filter);
-
         // Process eager loading
-        $this->resourceTransformer->processEagerLoading($model, $resourceDefinition, $context);
+        $this->resourceTransformer->processEagerLoading($queryBuilder, $resourceDefinition, $context);
+
+        $queryBuilder = $filters->getQueryBuilder();
 
         if (
-            $model instanceof Builder ||
-            $model instanceof Relation
+            $queryBuilder instanceof Builder ||
+            $queryBuilder instanceof Relation
         ) {
-            $models = $model->get();
+            $models = $queryBuilder->get();
         } else {
-            $models = $model;
+            $models = $queryBuilder;
         }
 
-        if ($filter->isReverse()) {
+        if ($filters->isReverted()) {
             $models = $models->reverse();
         }
 
@@ -171,7 +170,7 @@ trait ResourceController
     }
 
     /**
-     * @return ResourceTransformer
+     * @return \CatLab\Charon\Laravel\ResourceTransformer
      */
     public function getResourceTransformer(): ResourceTransformer
     {
@@ -264,6 +263,7 @@ trait ResourceController
      * @param Context $context
      * @param null $resourceDefinition
      * @return \CatLab\Charon\Collections\ResourceCollection
+     * @throws \CatLab\Charon\Exceptions\NoInputDataFound
      */
     public function bodyToResources(Context $context, $resourceDefinition = null) : ResourceCollection
     {
@@ -394,11 +394,17 @@ trait ResourceController
 
     /**
      * Output a resource or a collection of resources
-     * @deprecated Use getModels(), toResource() and toResources()
-     *
      * @param $models
      * @param array $parameters
      * @return \Illuminate\Http\JsonResponse
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
+     * @deprecated Use getModels(), toResource() and toResources()
+     *
      */
     protected function output($models, array $parameters = [])
     {

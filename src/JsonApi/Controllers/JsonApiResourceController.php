@@ -19,7 +19,7 @@ use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Laravel\Resolvers\JsonApiRequestResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
-use CatLab\Charon\Laravel\Transformers\ResourceTransformer;
+use CatLab\Charon\Laravel\ResourceTransformer;
 use CatLab\Charon\Library\ResourceDefinitionLibrary;
 use CatLab\Charon\Models\Context;
 use CatLab\Charon\Models\Properties\RelationshipField;

@@ -1,6 +1,6 @@
 <?php
 
-namespace CatLab\RESTResource\Tests;
+namespace CatLab\Charon\ResourceTransformers\Tests;
 
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
@@ -15,7 +15,7 @@ use PHPUnit_Framework_TestCase;
  * Class ValidatorTest
  * @package CatLab\RESTResource\Tests
  */
-class DescriptionTest extends PHPUnit_Framework_TestCase
+class DescriptionTest extends BaseTest
 {
     /**
      *

@@ -1,5 +1,10 @@
 <?php
 
+namespace CatLab\Charon\ResourceTransformers\Tests;
+
+use MockEntityModel;
+use MockResourceDefinition;
+
 require_once 'Models/MockEntityModel.php';
 require_once 'Models/MockPropertyResolver.php';
 require_once 'Models/MockResourceDefinition.php';
@@ -7,10 +12,15 @@ require_once 'Models/MockResourceDefinition.php';
 /**
  * Class ResourceTransformerTest
  */
-class ResourceTransformerTest
+class ResourceTransformerTest extends BaseTest
 {
     /**
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
     public function testResourceTransformer()
     {
@@ -20,9 +30,7 @@ class ResourceTransformerTest
 
         $definition = MockResourceDefinition::class;
 
-        $transformer = new \CatLab\Charon\Transformers\ResourceTransformer(
-            new \CatLab\Charon\Resolvers\PropertyResolver()
-        );
+        $transformer = $this->getResourceTransformer();
 
         $context = new \CatLab\Charon\Models\Context(
             \CatLab\Charon\Enums\Action::VIEW,

@@ -1,5 +1,10 @@
 <?php
 
+namespace CatLab\Charon\ResourceTransformers\Tests;
+
+use MockEntityModel;
+use MockPropertyResolver;
+
 require_once 'Models/MockEntityModel.php';
 require_once 'Models/MockPropertyResolver.php';
 require_once 'Models/MockResourceDefinition.php';
@@ -7,7 +12,7 @@ require_once 'Models/MockResourceDefinition.php';
 /**
  * Class PropertyResolverTest
  */
-class PropertyResolverTest extends PHPUnit_Framework_TestCase
+class PropertyResolverTest extends BaseTest
 {
     /**
      *
@@ -61,7 +66,7 @@ class PropertyResolverTest extends PHPUnit_Framework_TestCase
     public function testResolvePathParameters()
     {
         $propertyResolver = new \CatLab\Charon\Resolvers\PropertyResolver();
-        $transformer = new \CatLab\Charon\Transformers\ResourceTransformer($propertyResolver);
+        $transformer = $this->getResourceTransformer();
 
         MockEntityModel::clearNextId();
         $model = new MockEntityModel();
