@@ -325,11 +325,21 @@ trait JsonApiResourceController
     /**
      * @param string $action
      * @param array $parameters
+     * @return Context
+     */
+    protected function createContext($action = Action::VIEW, $parameters = [])
+    {
+        return new Context($action, $parameters);
+    }
+
+    /**
+     * @param string $action
+     * @param array $parameters
      * @return Context|string
      */
     protected function getContext($action = Action::VIEW, $parameters = []): \CatLab\Charon\Interfaces\Context
     {
-        $context = new Context($action, $parameters);
+        $context = $this->createContext($action, $parameters);
 
         if ($toShow = Request::query('fields')) {
             $context->showFields(array_map('trim', explode(',', $toShow)));
