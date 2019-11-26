@@ -27,6 +27,10 @@ class JsonApiRequestResolver extends RequestResolver
             return $request['filter'][$field->getDisplayName()];
         }
 
+        if (isset($request['filter'][$field->getDisplayName()])) {
+            return $request['filter'][$field->getDisplayName()];
+        }
+
         return null;
     }
 
@@ -45,7 +49,9 @@ class JsonApiRequestResolver extends RequestResolver
      */
     public function getSorting($request)
     {
-        return $this->getParameter($request, ResourceTransformer::SORT_PARAMETER);
+        $parameter = $this->getParameter($request, ResourceTransformer::SORT_PARAMETER);
+
+        return str_replace('-', '!', $parameter);
     }
 
     /**
