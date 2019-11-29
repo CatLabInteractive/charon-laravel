@@ -3,32 +3,25 @@
 namespace CatLab\Charon\Laravel\Controllers;
 
 use CatLab\Base\Helpers\ArrayHelper;
-use CatLab\Base\Models\Database\WhereParameter;
-use CatLab\Base\Models\Grammar\AndConjunction;
-use CatLab\Base\Models\Grammar\OrConjunction;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Factories\EntityFactory;
-use CatLab\Charon\Interfaces\SerializableResource;
-use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
-use CatLab\Charon\Laravel\InputParsers\PostInputParser;
 use CatLab\Charon\Models\ResourceDefinition;
+use CatLab\Charon\Models\RESTResource;
+use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
-use CatLab\Laravel\Database\SelectQueryTransformer;
-use CatLab\Charon\Interfaces\Context;
-use CatLab\Charon\Interfaces\ResourceDefinition as ResourceDefinitionContract;
-use CatLab\Charon\Interfaces\ResourceTransformer as ResourceTransformerContract;
-
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
 use CatLab\Charon\Laravel\ResourceTransformer;
-use CatLab\Charon\Models\RESTResource;
+use CatLab\Charon\Interfaces\SerializableResource;
+use CatLab\Charon\Interfaces\Context;
+use CatLab\Charon\Interfaces\ResourceDefinition as ResourceDefinitionContract;
+use CatLab\Charon\Interfaces\ResourceTransformer as ResourceTransformerContract;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\Relation;
-
 use Illuminate\Http\JsonResponse;
 use Request;
 use Response;
@@ -69,6 +62,20 @@ trait ResourceController
     }
 
     /**
+     * Apply any global filters that might be implemented by child classes.
+     * @param $queryBuilder
+     * @param $resourceDefinition
+     * @param $context
+     */
+    protected function applyGlobalFilters(
+        $queryBuilder,
+        ResourceDefinitionContract $resourceDefinition,
+        Context $context
+    ) {
+
+    }
+
+    /**
      * @param $queryBuilder
      * @param $resourceDefinition
      * @param Context $context
@@ -90,6 +97,9 @@ trait ResourceController
             $queryBuilder,
             $records
         );
+
+        // apply global filters.
+        $this->applyGlobalFilters($queryBuilder, $resourceDefinition, $context);
 
         // Process eager loading
         $this->resourceTransformer->processEagerLoading($queryBuilder, $resourceDefinition, $context);
