@@ -58,6 +58,7 @@ trait ResourceController
      * @param ResourceDefinition|string|null $resourceDefinition
      * @param int|null $records
      * @return Model[]
+     * @throws \CatLab\Charon\Exceptions\NotImplementedException
      */
     public function getModels($queryBuilder, Context $context, $resourceDefinition = null, $records = null)
     {
@@ -68,12 +69,13 @@ trait ResourceController
     }
 
     /**
-     * @deprecated Use getModels()
      * @param $queryBuilder
      * @param $resourceDefinition
      * @param Context $context
      * @param int $records
      * @return mixed
+     * @throws \CatLab\Charon\Exceptions\NotImplementedException
+     * @deprecated Use getModels()
      */
     public function filterAndGet($queryBuilder, $resourceDefinition, Context $context, $records = null)
     {
@@ -103,7 +105,7 @@ trait ResourceController
             $models = $queryBuilder;
         }
 
-        if ($filters->isReverted()) {
+        if ($filters->isReversed()) {
             $models = $models->reverse();
         }
 

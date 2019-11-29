@@ -5,6 +5,7 @@ namespace CatLab\Charon\Laravel\Resolvers;
 use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Models\Properties\ResourceField;
 use CatLab\Charon\Resolvers\RequestResolver;
+use Illuminate\Support\Str;
 
 /**
  * Class JsonApiPropertyResolver
@@ -51,7 +52,11 @@ class JsonApiRequestResolver extends RequestResolver
     {
         $parameter = $this->getParameter($request, ResourceTransformer::SORT_PARAMETER);
 
-        return str_replace('-', '!', $parameter);
+        if (Str::startsWith($parameter, '-')) {
+            $parameter = '!' . Str::substr($parameter, 1);
+        }
+
+        return $parameter;
     }
 
     /**
