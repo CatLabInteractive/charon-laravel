@@ -113,39 +113,6 @@ trait ResourceController
     }
 
     /**
-     * @param Builder $query
-     * @param $wheres
-     */
-    private function processWhere(Builder $query, $wheres)
-    {
-        $self = $this;
-        foreach ($wheres as $where) {
-
-            /** @var WhereParameter $where */
-            $query->where(function(Builder $query) use ($self, $where) {
-
-                if ($comparison = $where->getComparison()) {
-                    $query->where($comparison->getSubject(), $comparison->getOperator(), $comparison->getValue());
-                }
-
-                foreach ($where->getChildren() as $child) {
-                    if ($child instanceof AndConjunction) {
-                        $query->where(function (Builder $query) use ($self, $child) {
-                            $this->processWhere($query, [ $child->getSubject() ]);
-                        });
-                    } elseif ($child instanceof OrConjunction) {
-                        $query->orWhere(function (Builder $query) use ($self, $child) {
-                            $this->processWhere($query, [ $child->getSubject() ]);
-                        });
-                    } else {
-                        throw new \InvalidArgumentException("Got an unknown conjunction");
-                    }
-                }
-            });
-        }
-    }
-
-    /**
      * @param ResourceDefinitionContract $resourceDefinition
      * @param ResourceTransformerContract $resourceTransformer
      * @return $this
@@ -210,6 +177,7 @@ trait ResourceController
      * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
      * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      * @throws \CatLab\Charon\Exceptions\IterableExpected
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
     public function toResources($entities, Context $context, $resourceDefinition = null) : ResourceCollection
     {
@@ -254,6 +222,7 @@ trait ResourceController
      * @param null $resourceDefinition
      * @return RESTResource
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\NoInputDataFound
      */
     public function bodyToResource(Context $context, $resourceDefinition = null) : RESTResource
     {
@@ -354,6 +323,13 @@ trait ResourceController
      * @param array $parameters
      * @param null $resourceDefinition
      * @return \Illuminate\Http\JsonResponse
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
+     * @throws \CatLab\Charon\Exceptions\NotImplementedException
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
     protected function outputList($models, array $parameters = [], $resourceDefinition = null)
     {
@@ -366,6 +342,13 @@ trait ResourceController
      * @param array $parameters
      * @param null $resourceDefinition
      * @return array|\mixed[]
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
+     * @throws \CatLab\Charon\Exceptions\NotImplementedException
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
     protected function filteredModelsToResources($models, array $parameters = [], $resourceDefinition = null)
     {
