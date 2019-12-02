@@ -67,7 +67,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
                     }
                 }
 
-                // Also save the children
+                // Also save the grandchildren
                 foreach ($children as $child) {
                     if ($child instanceof Model) {
                         $child->saveTheChildren();
@@ -159,6 +159,11 @@ class Model extends \Illuminate\Database\Eloquent\Model
         }
     }
 
+    /**
+     * @param $name
+     * @param $childEntities
+     * @param $parameters
+     */
     public function removeChildrenFromEntity($name, $childEntities, $parameters)
     {
         // For each relationship, keep a list of all children that were added.
