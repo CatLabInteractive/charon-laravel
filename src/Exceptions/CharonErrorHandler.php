@@ -7,6 +7,7 @@ use CatLab\Charon\Exceptions\NoInputDataFound;
 use CatLab\Requirements\Exceptions\ValidationException;
 use Exception;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * Class Handler
@@ -27,6 +28,7 @@ class CharonErrorHandler
         switch (get_class($exception)) {
 
             case EntityNotFoundException::class:
+            case ModelNotFoundException::class:
                 return $this->jsonResponse('Resource not found', $exception->getMessage(), 404);
 
             case NoInputDataFound::class:
