@@ -37,7 +37,7 @@ trait CrudController
     abstract function getContext($action = Action::VIEW, $parameters = []) : Context;
     abstract function getResourceDefinition(): ResourceDefinition;
 
-    abstract function getModels($queryBuilder, Context $context, $resourceDefinition = null, $records = null);
+    abstract function getResources($queryBuilder, Context $context, $resourceDefinition = null, $records = null);
 
     abstract function bodyToResource(Context $context, $resourceDefinition = null) : RESTResource;
     abstract function bodyToResources(Context $context, $resourceDefinition = null) : ResourceCollection;
@@ -83,9 +83,7 @@ trait CrudController
         $this->authorizeIndex($request);
         $context = $this->getContext(Action::INDEX);
 
-        $models = $this->getModels($this->getIndexQuery($request), $context);
-        $resources = $this->toResources($models, $context);
-
+        $resources = $this->getResources($this->getIndexQuery($request), $context);
         return $this->getResourceResponse($resources, $context);
     }
 
