@@ -1,5 +1,11 @@
 <?php
 
+namespace Tests\Models;
+
+/**
+ * Class MockResourceDefinition
+ * @package Tests\Models
+ */
 class MockResourceDefinition extends \CatLab\Charon\Models\ResourceDefinition
 {
     public function __construct()

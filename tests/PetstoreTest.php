@@ -1,6 +1,6 @@
 <?php
 
-namespace CatLab\Charon\ResourceTransformers\Tests;
+namespace Tests;
 
 use Tests\Petstore\Definitions\PetDefinition;
 use Tests\Petstore\Definitions\PetDefinitionWithDate;
@@ -25,7 +25,7 @@ class PetstoreTest extends BaseTest
      */
     public function testPetStoreExpanded()
     {
-        $petDefinition = new PetDefinition(Pet::class);
+        $petDefinition = new PetDefinition();
 
         $category = new Category();
         $category
@@ -69,7 +69,7 @@ class PetstoreTest extends BaseTest
             'status'
         ]);
 
-        $resourceTransformer = new ResourceTransformer();
+        $resourceTransformer = $this->getResourceTransformer();
         $resource = $resourceTransformer->toResource($petDefinition, $pet, $context);
 
         $this->assertEquals([
@@ -114,7 +114,7 @@ class PetstoreTest extends BaseTest
      */
     public function testPetStoreFields()
     {
-        $petDefinition = new PetDefinition(Pet::class);
+        $petDefinition = new PetDefinition();
 
         $category = new Category();
         $category
@@ -155,7 +155,7 @@ class PetstoreTest extends BaseTest
             'tags'
         ]);
 
-        $resourceTransformer = new ResourceTransformer();
+        $resourceTransformer = $this->getResourceTransformer();
         $resource = $resourceTransformer->toResource($petDefinition, $pet, $context);
 
         $this->assertEquals([
@@ -183,7 +183,7 @@ class PetstoreTest extends BaseTest
      */
     public function testTransformer()
     {
-        $petDefinition = new PetDefinitionWithDate(Pet::class);
+        $petDefinition = new PetDefinitionWithDate();
 
         $category = new Category();
         $category
@@ -226,7 +226,7 @@ class PetstoreTest extends BaseTest
             'tags'
         ]);
 
-        $resourceTransformer = new ResourceTransformer();
+        $resourceTransformer = $this->getResourceTransformer();
         $resource = $resourceTransformer->toResource($petDefinition, $pet, $context);
 
         $this->assertEquals([

@@ -1,4 +1,9 @@
 <?php
+
+namespace Tests\ResourceDefinitionDepths;
+
+use Tests\Models\MockEntityModel;
+
 /**
  * Class MockResourceDefinitionDepthOne
  */
@@ -13,7 +18,7 @@ class MockResourceDefinitionDepthOne extends \CatLab\Charon\Models\ResourceDefin
 
             ->relationship('children', MockResourceDefinitionDepthOne::class)
                 ->expanded()
-                ->visible()
+                ->visible(true, true)
                 ->many()
                 ->writeable()
         ;

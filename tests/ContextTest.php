@@ -1,6 +1,6 @@
 <?php
 
-namespace CatLab\Charon\ResourceTransformers\Tests;
+namespace Tests;
 
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Models\Context;

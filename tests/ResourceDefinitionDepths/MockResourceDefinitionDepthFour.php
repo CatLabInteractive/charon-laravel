@@ -1,5 +1,13 @@
 <?php
 
+namespace Tests\ResourceDefinitionDepths;
+
+use Tests\Models\MockEntityModel;
+
+/**
+ * Class MockResourceDefinitionDepthFour
+ * @package Tests\Models
+ */
 class MockResourceDefinitionDepthFour extends \CatLab\Charon\Models\ResourceDefinition
 {
     public function __construct()
@@ -11,7 +19,7 @@ class MockResourceDefinitionDepthFour extends \CatLab\Charon\Models\ResourceDefi
 
             ->relationship('children', MockResourceDefinitionDepthFour::class)
                 ->expanded()
-                ->visible()
+                ->visible(true, true)
                 ->many()
                 ->maxDepth(4)
                 ->writeable()

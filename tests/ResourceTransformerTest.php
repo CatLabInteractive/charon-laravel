@@ -1,13 +1,9 @@
 <?php
 
-namespace CatLab\Charon\ResourceTransformers\Tests;
+namespace Tests;
 
-use MockEntityModel;
-use MockResourceDefinition;
-
-require_once 'Models/MockEntityModel.php';
-require_once 'Models/MockPropertyResolver.php';
-require_once 'Models/MockResourceDefinition.php';
+use Tests\Models\MockEntityModel;
+use Tests\Models\MockResourceDefinition;
 
 /**
  * Class ResourceTransformerTest

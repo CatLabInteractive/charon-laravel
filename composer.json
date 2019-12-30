@@ -15,7 +15,7 @@
         }
     },
     "require": {
-        "catlabinteractive/charon": "~1.3.1",
+        "catlabinteractive/charon": "~1.3.4",
         "catlabinteractive/base-laravel": "^5.2"
     },
     "require-dev": {
@@ -24,7 +24,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\Petstore\\": "tests/Petstore"
+            "Tests\\": "tests/"
         }
     },
     "extra": {

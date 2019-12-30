@@ -1,14 +1,12 @@
 <?php
 
-namespace CatLab\Charon\ResourceTransformers\Tests;
+namespace Tests;
 
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Models\Context;
 use CatLab\Charon\ResourceTransformer;
-
-use MockEntityModel;
-use MockResourceDefinitionExtraAttributes;
-use PHPUnit_Framework_TestCase;
+use Tests\Models\MockEntityModel;
+use Tests\ResourceDefinitionDepths\MockResourceDefinitionExtraAttributes;
 
 require_once 'ResourceDefinitionDepths/MockResourceDefinitionExtraAttributes.php';
 

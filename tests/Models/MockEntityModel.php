@@ -1,5 +1,11 @@
 <?php
 
+namespace Tests\Models;
+
+/**
+ * Class MockEntityModel
+ * @package Tests\Models
+ */
 class MockEntityModel
 {
     /**

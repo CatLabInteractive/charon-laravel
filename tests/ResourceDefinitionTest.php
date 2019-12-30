@@ -1,6 +1,6 @@
 <?php
 
-namespace CatLab\Charon\ResourceTransformers\Tests;
+namespace Tests;
 
 class ResourceDefinitionTest extends BaseTest
 {

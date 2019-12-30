@@ -1,8 +1,13 @@
 <?php
 
-namespace CatLab\Charon\ResourceTransformers\Tests;
+namespace Tests;
 
+use CatLab\Charon\Factories\ResourceFactory;
+use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
+use CatLab\Charon\Laravel\Resolvers\PropertySetter;
+use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
 use CatLab\Charon\Laravel\ResourceTransformer;
+use CatLab\Charon\Resolvers\RequestResolver;
 
 /**
  * Class BaseTest
@@ -10,10 +15,17 @@ use CatLab\Charon\Laravel\ResourceTransformer;
  */
 abstract class BaseTest extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * @return ResourceTransformer
+     */
     public function getResourceTransformer()
     {
         return new ResourceTransformer(
-            new \CatLab\Charon\Resolvers\PropertyResolver()
+            new PropertyResolver(),
+            new PropertySetter(),
+            new RequestResolver(),
+            new QueryAdapter(),
+            new ResourceFactory()
         );
     }
 }
