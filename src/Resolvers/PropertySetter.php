@@ -7,14 +7,11 @@ use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Exceptions\InvalidPropertyException;
 use CatLab\Charon\Laravel\Database\Model;
-use CatLab\Charon\Laravel\PropertySetterException;
-use CatLab\Charon\Models\Properties\IdentifierField;
+use CatLab\Charon\Laravel\Exceptions\PropertySetterException;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\Properties\ResourceField;
 use CatLab\Charon\Interfaces\PropertyResolver as PropertyResolverContract;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
