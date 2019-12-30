@@ -51,9 +51,15 @@ trait ResourceController
      * @param ResourceDefinition|string|null $resourceDefinition
      * @param int|null $records
      * @return Model[]
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
      * @throws \CatLab\Charon\Exceptions\NotImplementedException
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
-    public function getModels($queryBuilder, Context $context, $resourceDefinition = null, $records = null)
+    public function getResources($queryBuilder, Context $context, $resourceDefinition = null, $records = null)
     {
         $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
         $records = $records ?? $this->getRecordLimit();
@@ -81,7 +87,13 @@ trait ResourceController
      * @param Context $context
      * @param int $records
      * @return mixed
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
      * @throws \CatLab\Charon\Exceptions\NotImplementedException
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      * @deprecated Use getModels()
      */
     public function filterAndGet($queryBuilder, $resourceDefinition, Context $context, $records = null)
@@ -90,13 +102,14 @@ trait ResourceController
             $records = $this->getRecordLimit();
         }
 
-        $filters = $this->resourceTransformer->getFilters(
+        $filterResults = $this->resourceTransformer->applyFilters(
             $this->getRequest()->query(),
             $resourceDefinition,
             $context,
-            $queryBuilder,
-            $records
+            $queryBuilder
         );
+
+        $queryBuilder = $filterResults->getQueryBuilder();
 
         // apply global filters.
         $this->applyGlobalFilters($queryBuilder, $resourceDefinition, $context);
@@ -104,7 +117,7 @@ trait ResourceController
         // Process eager loading
         $this->resourceTransformer->processEagerLoading($queryBuilder, $resourceDefinition, $context);
 
-        $queryBuilder = $filters->getQueryBuilder();
+        //$queryBuilder = $filters->getQueryBuilder();
 
         if (
             $queryBuilder instanceof Builder ||
@@ -115,11 +128,11 @@ trait ResourceController
             $models = $queryBuilder;
         }
 
-        if ($filters->isReversed()) {
+        if ($filterResults->isReversed()) {
             $models = $models->reverse();
         }
 
-        return $models;
+        return $this->resourceTransformer->toResources($resourceDefinition, $models, $context, $filterResults);
     }
 
     /**
@@ -365,14 +378,12 @@ trait ResourceController
         $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
         $context = $this->getContext(Action::INDEX, $parameters);
 
-        $models = $this->filterAndGet(
+        return $this->filterAndGet(
             $models,
             $resourceDefinition,
             $context,
             $this->getRecordLimit()
         );
-
-        return $this->modelsToResources($models, $context, $resourceDefinition);
     }
 
     /**

@@ -16,7 +16,8 @@ use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResource;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResourceCollection;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResponse;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
-use CatLab\Charon\Laravel\Resolvers\JsonApiRequestResolver;
+use CatLab\Charon\Laravel\Processors\PaginationProcessor;
+use CatLab\Charon\Laravel\JsonApi\Resolvers\JsonApiRequestResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
 use CatLab\Charon\Laravel\ResourceTransformer;
@@ -24,7 +25,6 @@ use CatLab\Charon\Library\ResourceDefinitionLibrary;
 use CatLab\Charon\Models\Context;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Pagination\PaginationBuilder;
-use CatLab\Charon\Processors\PaginationProcessor;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Request;
@@ -248,37 +248,6 @@ trait JsonApiResourceController
      *
      * @param $models
      * @param array $parameters
-     * @param null $resourceDefinition
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
-     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
-     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
-     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
-     * @throws \CatLab\Charon\Exceptions\IterableExpected
-     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
-     */
-    protected function outputList($models, array $parameters = [], $resourceDefinition = null)
-    {
-        $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
-
-        $context = $this->getContext(Action::INDEX, $parameters);
-
-        $models = $this->filterAndGet(
-            $models,
-            $resourceDefinition,
-            $context,
-            Request::input('records', 10)
-        );
-
-        $output = $this->modelsToResources($models, $context, $resourceDefinition);
-        return Response::json($output);
-    }
-
-    /**
-     * Output a resource or a collection of resources
-     *
-     * @param $models
-     * @param array $parameters
      * @return \Illuminate\Http\JsonResponse
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
      * @throws \CatLab\Charon\Exceptions\InvalidEntityException
@@ -390,7 +359,10 @@ trait JsonApiResourceController
             new PropertyResolver(),
             new PropertySetter(),
             new JsonApiRequestResolver(),
-            new ResourceFactory(JsonApiResource::class, JsonApiResourceCollection::class)
+            new ResourceFactory(
+                JsonApiResource::class,
+                JsonApiResourceCollection::class
+            )
         );
     }
 }

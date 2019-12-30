@@ -1,6 +1,6 @@
 <?php
 
-namespace CatLab\Charon\Laravel\Resolvers;
+namespace CatLab\Charon\Laravel\JsonApi\Resolvers;
 
 use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Models\Properties\ResourceField;
@@ -78,7 +78,7 @@ class JsonApiRequestResolver extends RequestResolver
      */
     public function getPage($request)
     {
-        return $this->getPageParameter($request, self::PAGE_PARAMETER);
+        return intval($this->getPageParameter($request, self::PAGE_PARAMETER));
     }
 
     /**

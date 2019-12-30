@@ -119,6 +119,7 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             $field->getChildResource(),
             $models,
             $context->getChildContext($field, $field->getExpandContext()),
+            null,
             $value,
             $entity
         );
