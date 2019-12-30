@@ -2,9 +2,12 @@
 
 namespace CatLab\Charon\Laravel;
 
+use CatLab\Charon\Factories\ResourceFactory;
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
+use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
 use CatLab\Charon\Laravel\ResourceTransformer;
+use CatLab\Charon\Resolvers\RequestResolver;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -43,7 +46,10 @@ class RESTResourceProvider extends ServiceProvider
     {
         return new ResourceTransformer(
             new PropertyResolver(),
-            new PropertySetter()
+            new PropertySetter(),
+            new RequestResolver(),
+            new QueryAdapter(),
+            new ResourceFactory()
         );
     }
 }

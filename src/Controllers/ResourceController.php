@@ -6,6 +6,8 @@ use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Factories\EntityFactory;
+use CatLab\Charon\Factories\ResourceFactory;
+use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
 use CatLab\Charon\Models\ResourceDefinition;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
@@ -17,6 +19,7 @@ use CatLab\Charon\Interfaces\SerializableResource;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition as ResourceDefinitionContract;
 use CatLab\Charon\Interfaces\ResourceTransformer as ResourceTransformerContract;
+use CatLab\Charon\Resolvers\RequestResolver;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -529,7 +532,10 @@ trait ResourceController
     {
         return new ResourceTransformer(
             new PropertyResolver(),
-            new PropertySetter()
+            new PropertySetter(),
+            new RequestResolver(),
+            new QueryAdapter(),
+            new ResourceFactory()
         );
     }
 }

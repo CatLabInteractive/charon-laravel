@@ -69,8 +69,6 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
         RelationshipValue $parent = null,
         $parentEntity = null
     ) {
-
-
         if ($filterResults) {
             $collection->addMeta('page', [
                 'total' => $filterResults->getTotalRecords(),
@@ -93,15 +91,5 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
         $parentEntity = null
     ) {
         // TODO: Implement processResource() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function applyCatLabQueryBuilder(SelectQueryParameters $catlabQueryBuilder, $queryBuilder)
-    {
-        // Apply the catlab query parameters to the laravel query builder.
-        $selectQueryTransformer = new SelectQueryTransformer();
-        $selectQueryTransformer->toLaravel($queryBuilder, $catlabQueryBuilder);
     }
 }
