@@ -114,4 +114,24 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
 
         $queryBuilder->orderBy($this->getQualifiedName($field), $direction);
     }
+
+    /**
+     * @param ResourceTransformer $transformer
+     * @param ResourceDefinition $definition
+     * @param Context $context
+     * @param $queryBuilder
+     * @return
+     */
+    public function countRecords(
+        ResourceTransformer $transformer,
+        ResourceDefinition $definition,
+        Context $context,
+        $queryBuilder
+    ) {
+        if (!$queryBuilder instanceof Builder) {
+            throw new \InvalidArgumentException('$queryBuilder is expected to be of type ' . Builder::class . ', ' . get_class($queryBuilder) . ' provided.');
+        }
+
+        return $queryBuilder->count();
+    }
 }
