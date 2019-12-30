@@ -20,6 +20,7 @@ use CatLab\Charon\Laravel\Processors\PaginationProcessor;
 use CatLab\Charon\Laravel\JsonApi\Resolvers\JsonApiRequestResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
+use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
 use CatLab\Charon\Laravel\ResourceTransformer;
 use CatLab\Charon\Library\ResourceDefinitionLibrary;
 use CatLab\Charon\Models\Context;
@@ -359,6 +360,7 @@ trait JsonApiResourceController
             new PropertyResolver(),
             new PropertySetter(),
             new JsonApiRequestResolver(),
+            new QueryAdapter(),
             new ResourceFactory(
                 JsonApiResource::class,
                 JsonApiResourceCollection::class

@@ -6,12 +6,14 @@ use CatLab\Base\Enum\Operator;
 use CatLab\Charon\Collections\PropertyValueCollection;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Exceptions\InvalidPropertyException;
+use CatLab\Charon\Exceptions\VariableNotFoundInContext;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
 use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Models\Properties\Base\Field;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\Values\Base\RelationshipValue;
+use CatLab\Charon\Models\Values\PropertyValue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -68,6 +70,38 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             //throw new InvalidPropertyException;
             return $entity->$name;
         }
+    }
+
+    /**
+     * @param ResourceTransformer $transformer
+     * @param RelationshipField $field
+     * @param mixed $parentEntity
+     * @param PropertyValueCollection $identifiers
+     * @param Context $context
+     * @return mixed
+     * @throws InvalidPropertyException
+     * @throws VariableNotFoundInContext
+     */
+    public function getChildByIdentifiers(
+        ResourceTransformer $transformer,
+        RelationshipField $field,
+        $parentEntity,
+        PropertyValueCollection $identifiers,
+        Context $context
+    ) {
+        /** @var Builder $entities */
+        $entities = $this->resolveProperty($transformer, $parentEntity, $field, $context);
+
+        foreach ($identifiers->toArray() as $identifier) {
+            /** @var PropertyValue $identifier */
+            $entities->where(
+                $transformer->getQueryAdapter()->getQualifiedName($identifier->getField()),
+                '=',
+                $identifier->getValue()
+            );
+        }
+
+        return $entities->first();
     }
 
     /**
