@@ -134,4 +134,31 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
 
         return $queryBuilder->count();
     }
+
+    /**
+     * @param ResourceTransformer $transformer
+     * @param ResourceDefinition $definition
+     * @param Context $context
+     * @param $queryBuilder
+     * @param $records
+     * @param $skip
+     */
+    public function applyLimit(
+        ResourceTransformer $transformer,
+        ResourceDefinition $definition,
+        Context $context,
+        $queryBuilder,
+        $records,
+        $skip
+    ) {
+        if (!$queryBuilder instanceof Builder) {
+            throw new \InvalidArgumentException('$queryBuilder is expected to be of type ' . Builder::class . ', ' . get_class($queryBuilder) . ' provided.');
+        }
+
+        $queryBuilder->take($records);
+
+        if ($skip) {
+            $queryBuilder->skip($skip);
+        }
+    }
 }
