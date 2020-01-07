@@ -107,7 +107,7 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
     /**
      * @param ResourceTransformer $transformer
      * @param mixed $entity
-     * @param RelationshipValue $value
+     * @param RelationshipField $field
      * @param Context $context
      * @return ResourceCollection
      * @throws InvalidPropertyException
@@ -116,12 +116,9 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
     public function resolveManyRelationship(
         ResourceTransformer $transformer,
         $entity,
-        RelationshipValue $value,
+        RelationshipField $field,
         Context $context
-    ) : ResourceCollection {
-
-        $field = $value->getField();
-
+    ) {
         $models = $this->resolveProperty($transformer, $entity, $field, $context);
 
         if ($models instanceof Relation) {
@@ -141,20 +138,9 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
                 }
             }
 
-            $models = $models->get();
+            return $models;
         }
 
-        if ($models === null) {
-            return $transformer->getResourceFactory()->createResourceCollection();;
-        }
-
-        return $transformer->toResources(
-            $field->getChildResource(),
-            $models,
-            $context->getChildContext($field, $field->getExpandContext()),
-            null,
-            $value,
-            $entity
-        );
+        return null;
     }
 }

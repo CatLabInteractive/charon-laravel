@@ -90,10 +90,7 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         $value,
         $operator = Operator::EQ
     ) {
-        if (!$queryBuilder instanceof Builder) {
-            throw new \InvalidArgumentException('$queryBuilder is expected to be of type ' . Builder::class . ', ' . get_class($queryBuilder) . ' provided.');
-        }
-
+        $queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
         $queryBuilder->where($this->getQualifiedName($field), $operator, $value);
     }
 
@@ -108,10 +105,7 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         $queryBuilder,
         $direction = 'asc'
     ) {
-        if (!$queryBuilder instanceof Builder) {
-            throw new \InvalidArgumentException('$queryBuilder is expected to be of type ' . Builder::class . ', ' . get_class($queryBuilder) . ' provided.');
-        }
-
+        $queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
         $queryBuilder->orderBy($this->getQualifiedName($field), $direction);
     }
 
@@ -128,11 +122,25 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         Context $context,
         $queryBuilder
     ) {
-        if (!$queryBuilder instanceof Builder) {
-            throw new \InvalidArgumentException('$queryBuilder is expected to be of type ' . Builder::class . ', ' . get_class($queryBuilder) . ' provided.');
-        }
-
+        $queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
         return $queryBuilder->count();
+    }
+
+    /**
+     * @param ResourceTransformer $transformer
+     * @param ResourceDefinition $definition
+     * @param Context $context
+     * @param $queryBuilder
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getRecords(
+        ResourceTransformer $transformer,
+        ResourceDefinition $definition,
+        Context $context,
+        $queryBuilder
+    ) {
+        $queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
+        return $queryBuilder->get();
     }
 
     /**
@@ -160,5 +168,21 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         if ($skip) {
             $queryBuilder->skip($skip);
         }
+    }
+
+    /**
+     * @param $queryBuilder
+     * @return Builder
+     */
+    private function checkValidQueryBuilder($queryBuilder)
+    {
+        if (
+            !$queryBuilder instanceof Builder &&
+            !$queryBuilder instanceof Relation
+        ) {
+            throw new \InvalidArgumentException('$queryBuilder is expected to be of type ' . Builder::class . ', ' . get_class($queryBuilder) . ' provided.');
+        }
+
+        return $queryBuilder;
     }
 }

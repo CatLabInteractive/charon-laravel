@@ -129,7 +129,7 @@ trait CrudController
         $entity = $this->toEntity($inputResource, $writeContext);
 
         // Save the entity
-        $this->saveEntity($request, $entity);
+        $entity = $this->saveEntity($request, $entity);
 
         // Turn back into a resource
         return $this->createViewEntityResponse($entity)->setStatusCode(201);
@@ -166,7 +166,7 @@ trait CrudController
         $entity = $this->toEntity($inputResource, $writeContext, $entity);
 
         // Save the entity
-        $this->saveEntity($request, $entity);
+        $entity = $this->saveEntity($request, $entity);
 
         // Turn back into a resource
         return $this->createViewEntityResponse($entity);
@@ -286,19 +286,22 @@ trait CrudController
     /**
      * @param Request $request
      * @param \Illuminate\Database\Eloquent\Model $entity
+     * @return \Illuminate\Database\Eloquent\Model
      */
     protected function saveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity)
     {
         $isNew = !$entity->exists;
 
-        $this->beforeSaveEntity($request, $entity, $isNew);
+        $entity = $this->beforeSaveEntity($request, $entity, $isNew);
         if ($entity instanceof Model) {
             $entity->saveRecursively();
         } else {
             $entity->save();
         }
 
-        $this->afterSaveEntity($request, $entity, $isNew);
+        $entity = $this->afterSaveEntity($request, $entity, $isNew);
+
+        return $entity;
     }
 
     /**
@@ -306,10 +309,11 @@ trait CrudController
      * @param Request $request
      * @param \Illuminate\Database\Eloquent\Model $entity
      * @param bool $isNew
+     * @return \Illuminate\Database\Eloquent\Model
      */
     protected function beforeSaveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity, $isNew = false)
     {
-
+        return $entity;
     }
 
     /**
@@ -317,10 +321,11 @@ trait CrudController
      * @param Request $request
      * @param \Illuminate\Database\Eloquent\Model $entity
      * @param bool $isNew
+     * @return \Illuminate\Database\Eloquent\Model
      */
     protected function afterSaveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity, $isNew = false)
     {
-
+        return $entity;
     }
 
     /**

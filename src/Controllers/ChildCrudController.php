@@ -60,6 +60,7 @@ trait ChildCrudController
      * @param Request $request
      * @param \Illuminate\Database\Eloquent\Model $entity
      * @param bool $isNew
+     * @return Model
      */
     protected function beforeSaveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity, $isNew = false)
     {
@@ -69,6 +70,8 @@ trait ChildCrudController
                 $this->getInverseRelationship($entity)->associate($this->getParent($request));
             }
         }
+
+        return $entity;
     }
 
     /**

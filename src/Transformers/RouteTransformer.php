@@ -32,9 +32,8 @@ class RouteTransformer
     {
         foreach ($routes->getRoutes() as $route) {
             $options = $route->getOptions();
-            $action = $route->getAction();
 
-            $laravelRoute = Route::match([ $route->getHttpMethod() ], $route->getPath(), $action);
+            $laravelRoute = $this->createRoute($route);
 
             // The InputTransformer middleware makes sure that the parameters that require a
             // transformation (for example DateTimes) are transformed before the controller takes charge.
@@ -75,6 +74,23 @@ class RouteTransformer
                 $laravelRoute->middleware($options['middleware']);
             }
         }
+    }
+
+    /**
+     * @param \CatLab\Charon\Models\Routing\Route $route
+     * @return \Illuminate\Routing\Route
+     */
+    protected function createRoute(\CatLab\Charon\Models\Routing\Route $route)
+    {
+        $action = $route->getAction();
+        list ($path, $staticRouteParameters) = $route->getPathWithStaticRouteParameters();
+
+        $laravelRoute = Route::match([$route->getHttpMethod()], $path, $action);
+        foreach ($staticRouteParameters as $k => $v) {
+            $laravelRoute->defaults($k, $v);
+        }
+
+        return $laravelRoute;
     }
 
     /**
