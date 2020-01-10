@@ -13,6 +13,7 @@ use CatLab\Charon\Models\Properties\RelationshipField;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Collection;
 
 /**
  * Class QueryAdapter
@@ -122,7 +123,7 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         Context $context,
         $queryBuilder
     ) {
-        $queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
+        //$queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
         return $queryBuilder->count();
     }
 
@@ -139,7 +140,11 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         Context $context,
         $queryBuilder
     ) {
-        $queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
+        if ($queryBuilder instanceof Collection) {
+            return $queryBuilder;
+        }
+
+        //$queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
         return $queryBuilder->get();
     }
 

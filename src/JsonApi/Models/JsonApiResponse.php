@@ -138,7 +138,7 @@ class JsonApiResponse extends ResourceResponse
                         ]
                     ];
 
-                    if ($property->getField()->getExpandContext() !== Action::IDENTIFIER) {
+                    if ($property->getContext()->getAction() !== Action::IDENTIFIER) {
                         $this->included[] = $property->getChild();
                     }
 
@@ -152,7 +152,7 @@ class JsonApiResponse extends ResourceResponse
                             'type' => $child->getType()
                         ];
 
-                        if ($property->getField()->getExpandContext() !== Action::IDENTIFIER) {
+                        if ($property->getContext()->getAction() !== Action::IDENTIFIER) {
                             $this->included[] = $child;
                         }
                     }

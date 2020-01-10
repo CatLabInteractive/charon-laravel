@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Collection;
 
 /**
  * Class PropertyResolver
@@ -120,6 +121,10 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
         Context $context
     ) {
         $models = $this->resolveProperty($transformer, $entity, $field, $context);
+
+        if ($models instanceof Collection) {
+            return $models;
+        }
 
         if ($models instanceof Relation) {
             // Clone to avoid setting multiple filters
