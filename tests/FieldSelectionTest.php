@@ -75,7 +75,8 @@ class FieldSelectionTest extends BaseTest
         $context = new Context(Action::INDEX);
         $context->expandField('alwaysVisibleRelationship');
 
-        $result = $transformer->toResource($resourceDefinition, $this->getDeepChildren(), $context);
+        $entity = $this->getDeepChildren();
+        $result = $transformer->toResource($resourceDefinition, $entity, $context);
 
         $this->assertEquals([
 
