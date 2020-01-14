@@ -145,8 +145,6 @@ trait CrudController
             $createdResources->add($this->toResource($entity, $readContext));
         }
 
-        \Log::warning($inputResources->getMeta('bulk'));
-
         // Turn back into a resource
         if (
             count($inputResources) > 1 ||
