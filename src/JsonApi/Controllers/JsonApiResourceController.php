@@ -4,14 +4,17 @@
 namespace CatLab\Charon\Laravel\JsonApi\Controllers;
 
 use CatLab\Base\Helpers\ArrayHelper;
+use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Collections\RouteCollection;
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Enums\Cardinality;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Factories\ResourceFactory;
+use CatLab\Charon\Interfaces\RESTResource;
 use CatLab\Charon\Laravel\Controllers\CrudController;
 use CatLab\Charon\Laravel\Controllers\ResourceController;
 use CatLab\Charon\Laravel\JsonApi\InputParsers\JsonApiInputParser;
+use CatLab\Charon\Laravel\JsonApi\Models\JsonApiContext;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResource;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResourceCollection;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResponse;
@@ -79,10 +82,21 @@ trait JsonApiResourceController
         );
 
         // we need to create a ResourceDefinition object to create the 'linkable' endpoints
-        $resourceDefinition = ResourceDefinitionLibrary::make($resourceDefinition);
-        foreach ($resourceDefinition->getFields()->getRelationships() as $field)  {
+        $resourceDefinitionObject = ResourceDefinitionLibrary::make($resourceDefinition);
+        foreach ($resourceDefinitionObject->getFields()->getRelationships() as $field)  {
             self::addLinkRelationshipEndpoint($childResource, $field, $path, $resourceId, $controller, $options);
         }
+
+        // add support for batch update
+        $childResource->patch($path, $controller . '@batchEdit')
+            ->summary(function () use ($resourceDefinition) {
+                $entityName = ResourceDefinitionLibrary::make($resourceDefinition)
+                    ->getEntityName(true);
+
+                return 'Batch update multiple ' . $entityName;
+            })
+            ->parameters()->resource($resourceDefinition)->many()->required()
+            ->returns()->statusCode(200)->many($resourceDefinition);
 
         return $childResource;
     }
@@ -291,6 +305,83 @@ trait JsonApiResourceController
     }
 
     /**
+     * @param \Illuminate\Http\Request $request
+     * @return ResourceResponse|\Symfony\Component\HttpFoundation\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function batchEdit(\Illuminate\Http\Request $request)
+    {
+        $this->request = $request;
+
+        $this->authorizeCreate($request);
+
+        $writeContext = $this->getContext(Action::EDIT);
+        $inputResources = $this->bodyToResources($writeContext);
+
+        $existingEntities = [];
+
+        // first validate all resources
+        foreach ($inputResources as $resourceId => $inputResource) {
+
+            /** @var RESTResource $inputResource */
+            $entityId = $inputResource
+                ->getProperties()
+                ->getIdentifiers()
+                ->first()
+                ->getValue();
+
+            $entity = $this->callEntityMethod($request, 'find', $entityId);
+            if (!$entity) {
+                $this->notFound($entityId, $this->getEntityClassName());
+            }
+
+            $existingEntities[$resourceId] = $entity;
+
+            try {
+                $inputResource->validate($writeContext, $entity);
+            } catch (ResourceValidationException $e) {
+                return $this->getValidationErrorResponse($e);
+            }
+        }
+
+        $createdResources = new ResourceCollection();
+
+        $readContext = $this->getContext(Action::VIEW);
+
+        // now save all resources
+        foreach ($inputResources as $resourceId => $inputResource) {
+
+            /** @var RESTResource $inputResource */
+            $entity = $this->toEntity(
+                $inputResource,
+                $writeContext,
+                $existingEntities[$resourceId]
+            );
+
+            // Save the entity
+            $entity = $this->saveEntity($request, $entity);
+
+            $createdResources->add($this->toResource($entity, $readContext));
+        }
+
+        // Turn back into a resource
+        if (
+            count($inputResources) > 0 ||
+            $inputResources->getMeta('bulk')
+            // bulk is a meta flag that can be set by the input parser, to note that, even if only
+            // one resource was submitted, the response should still be an array.
+        ) {
+            $response = $this->getResourceResponse($createdResources, $readContext);
+        } else {
+            // only take the first (and only) resource
+            $response = $this->getResourceResponse($createdResources->first(), $readContext);
+        }
+
+        $response->setStatusCode(201);
+        return $response;
+    }
+
+    /**
      * @param $data
      * @param \CatLab\Charon\Interfaces\Context|null $context
      * @return ResourceResponse
@@ -373,7 +464,7 @@ trait JsonApiResourceController
      */
     protected function createContext($action = Action::VIEW, $parameters = [])
     {
-        return new Context($action, $parameters);
+        return new JsonApiContext($action, $parameters);
     }
 
     /**
@@ -386,7 +477,14 @@ trait JsonApiResourceController
         $context = $this->createContext($action, $parameters);
 
         if ($toShow = Request::query('fields')) {
-            $context->showFields(array_map('trim', explode(',', $toShow)));
+            $resourceDefinition = $this->getResourceDefinition();
+            if (!is_array($toShow)) {
+                $toShow = [ $resourceDefinition->getType() => $toShow ];
+            }
+
+            foreach ($toShow as $k => $v) {
+                $context->includeFields($k, array_map('trim', explode(',', $v)));
+            }
         }
 
         if ($toExpand = Request::query('include')) {

@@ -20,6 +20,7 @@ use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition as ResourceDefinitionContract;
 use CatLab\Charon\Interfaces\ResourceTransformer as ResourceTransformerContract;
 use CatLab\Charon\Resolvers\RequestResolver;
+use CatLab\Charon\Laravel\Contracts\Response as ResponseContract;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -486,7 +487,7 @@ trait ResourceController
      * @param Context|null $context
      * @return ResourceResponse
      */
-    protected function getResourceResponse($data, Context $context  = null)
+    protected function getResourceResponse($data, Context $context  = null): ResponseContract
     {
         return new ResourceResponse($data, $context);
     }

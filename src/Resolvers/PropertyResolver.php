@@ -122,6 +122,10 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
     ) {
         $models = $this->resolveProperty($transformer, $entity, $field, $context);
 
+        if ($models instanceof Collection) {
+            return $models;
+        }
+
         if ($models instanceof Relation) {
             // Clone to avoid setting multiple filters
             $models = clone $models;
@@ -142,6 +146,6 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             return $models;
         }
 
-        return $models;
+        return null;
     }
 }

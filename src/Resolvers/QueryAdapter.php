@@ -140,13 +140,12 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         Context $context,
         $queryBuilder
     ) {
-        //$queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
-        if ($queryBuilder instanceof Builder) {
-            return $queryBuilder->get();
+        if ($queryBuilder instanceof Collection) {
+            return $queryBuilder;
         }
 
-        // seems like this is a plain array.
-        return $queryBuilder;
+        //$queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
+        return $queryBuilder->get();
     }
 
     /**

@@ -75,6 +75,9 @@ class JsonApiResponse extends ResourceResponse
         return $this->output;
     }
 
+    /**
+     * @param $resource
+     */
     protected function addResources($resource)
     {
         if ($resource instanceof ResourceCollection) {

@@ -15,6 +15,7 @@ use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Laravel\InputParsers\LaravelInputParser;
 use CatLab\Charon\Models\Routing\Parameters\ResourceParameter;
 use CatLab\Charon\Models\Routing\Route;
+use Illuminate\Support\Str;
 use Request;
 
 /**
@@ -23,18 +24,25 @@ use Request;
  */
 class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
 {
+    use LaravelInputParser;
+
+    /**
+     * @var string
+     */
     protected $contentType = 'application/vnd.api+json';
 
-    use LaravelInputParser;
+    /**
+     * @var array
+     */
+    private $contentTypeParameters;
 
     /**
      * @return bool
      */
     protected function hasApplicableContentType()
     {
-        switch ($this->getContentType()) {
-            case $this->contentType:
-                return true;
+        if (Str::startsWith($this->getContentType(), $this->contentType)) {
+            return true;
         }
 
         return false;
@@ -90,7 +98,6 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
     }
 
     /**
-     * Look for
      * @param ResourceTransformer $resourceTransformer
      * @param ResourceDefinition $resourceDefinition
      * @param Context $context
@@ -120,34 +127,49 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
 
         $resourceCollection = $resourceTransformer->getResourceFactory()->createResourceCollection();
 
-        $modelInput = [];
-        if (isset($content['data']['attributes'])) {
-            $modelInput = $content['data']['attributes'];
+        // do we have a bulk method?
+        if (
+            $this->hasContentTypeExtension('bulk') &&
+            !ArrayHelper::isAssociative($content['data'])
+        ) {
+            $resources = $content['data'];
+            $resourceCollection->addMeta('bulk', false);
+        } else {
+            $resources = [ $content['data'] ];
+            $resourceCollection->addMeta('bulk', true);
         }
 
-        if (isset($content['data']['id'])) {
-            $modelInput['id'] = $content['data']['id'];
-        }
+        foreach ($resources as $resourceData) {
 
-        // our system handles relationships in the same way as attributes, so...
-        if (isset($content['data']['relationships'])) {
-            foreach ($content['data']['relationships'] as $relationshipName => $relationshipContent) {
-                if (!isset($relationshipContent['data'])) {
-                    continue;
-                }
+            $modelInput = [];
+            if (isset($resourceData['attributes'])) {
+                $modelInput = $resourceData['attributes'];
+            }
 
-                if ($related = $this->getRelationshipContent($relationshipContent)) { // variable assignment in if stagement
-                    $modelInput[$relationshipName] = $related;
+            if (isset($resourceData['id'])) {
+                $modelInput['id'] = $resourceData['id'];
+            }
+
+            // our system handles relationships in the same way as attributes, so...
+            if (isset($resourceData['relationships'])) {
+                foreach ($resourceData['relationships'] as $relationshipName => $relationshipContent) {
+                    if (!isset($relationshipContent['data'])) {
+                        continue;
+                    }
+
+                    if ($related = $this->getRelationshipContent($relationshipContent)) { // variable assignment in if stagement
+                        $modelInput[$relationshipName] = $related;
+                    }
                 }
             }
-        }
 
-        $resource = $resourceTransformer->fromArray(
-            $resourceDefinition,
-            $modelInput,
-            $context
-        );
-        $resourceCollection->add($resource);
+            $resource = $resourceTransformer->fromArray(
+                $resourceDefinition,
+                $modelInput,
+                $context
+            );
+            $resourceCollection->add($resource);
+        }
 
         return $resourceCollection;
     }
@@ -186,5 +208,54 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
         return [
             'id' => $relatedContent['id']
         ];
+    }
+
+    /**
+     * @param string $string
+     * @return bool
+     */
+    private function hasContentTypeExtension($extension)
+    {
+        // get the last part
+        $contentTypeParameters = $this->getContentTypeParameters();
+        if (!isset($contentTypeParameters['ext'])) {
+            return false;
+        }
+
+        if (in_array($extension, explode(',', $contentTypeParameters['ext']))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get all parameters that were set in the 'content type' header.
+     * http://springbot.github.io/json-api/extensions/
+     * @return array
+     */
+    private function getContentTypeParameters()
+    {
+        if (!isset($this->contentTypeParameters)) {
+
+            $parameters = [];
+            $contentType = Str::substr($this->getContentType(), Str::length($this->contentType) + 1);
+
+            // Replace ; with newline (in order to be able to use ini parsing)
+            $contentType = str_replace(';', "\n", $contentType);
+
+            if (empty($contentType)) {
+                return $parameters;
+            }
+
+            $parameters = parse_ini_string($contentType);
+            if ($parameters) {
+                $this->contentTypeParameters = $parameters;
+            } else {
+                $this->contentTypeParameters = [];
+            }
+        }
+
+        return $this->contentTypeParameters;
     }
 }
