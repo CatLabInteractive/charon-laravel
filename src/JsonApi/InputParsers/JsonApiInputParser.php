@@ -133,10 +133,10 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
             !ArrayHelper::isAssociative($content['data'])
         ) {
             $resources = $content['data'];
-            $resourceCollection->addMeta('bulk', false);
+            $resourceCollection->addMeta('bulk', true);
         } else {
             $resources = [ $content['data'] ];
-            $resourceCollection->addMeta('bulk', true);
+            $resourceCollection->addMeta('bulk', false);
         }
 
         foreach ($resources as $resourceData) {

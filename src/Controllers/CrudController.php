@@ -145,9 +145,11 @@ trait CrudController
             $createdResources->add($this->toResource($entity, $readContext));
         }
 
+        \Log::warning($inputResources->getMeta('bulk'));
+
         // Turn back into a resource
         if (
-            count($inputResources) > 0 ||
+            count($inputResources) > 1 ||
             $inputResources->getMeta('bulk')
                 // bulk is a meta flag that can be set by the input parser, to note that, even if only
                 // one resource was submitted, the response should still be an array.

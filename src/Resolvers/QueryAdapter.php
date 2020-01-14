@@ -147,7 +147,8 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         //$queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
         if (
             $queryBuilder instanceof \Illuminate\Database\Eloquent\Builder ||
-            $queryBuilder instanceof \Illuminate\Database\Query\Builder
+            $queryBuilder instanceof \Illuminate\Database\Query\Builder ||
+            $queryBuilder instanceof \Illuminate\Database\Eloquent\Relations\Relation
         ) {
             return $queryBuilder->get();
         }
