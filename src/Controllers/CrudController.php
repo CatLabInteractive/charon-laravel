@@ -11,6 +11,7 @@ use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Models\RESTResource;
+use CatLab\Charon\Laravel\Contracts\Response as ResponseContract;
 use CatLab\Requirements\Exceptions\RequirementValidationException;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use CatLab\Requirements\Exceptions\ValidationException;
@@ -32,7 +33,8 @@ trait CrudController
     /*
      * Required methods
      */
-    abstract function getResourceResponse($data, Context $context  = null);
+
+    abstract function getResourceResponse($data, Context $context  = null): ResponseContract;
 
     abstract function getContext($action = Action::VIEW, $parameters = []) : Context;
     abstract function getResourceDefinition(): ResourceDefinition;
@@ -118,21 +120,46 @@ trait CrudController
         $this->authorizeCreate($request);
 
         $writeContext = $this->getContext(Action::CREATE);
-        $inputResource = $this->bodyToResource($writeContext);
+        $inputResources = $this->bodyToResources($writeContext);
 
-        try {
-            $inputResource->validate($writeContext);
-        } catch (ResourceValidationException $e) {
-            return $this->getValidationErrorResponse($e);
+        // first validate all resources
+        foreach ($inputResources as $inputResource) {
+            try {
+                $inputResource->validate($writeContext);
+            } catch (ResourceValidationException $e) {
+                return $this->getValidationErrorResponse($e);
+            }
         }
 
-        $entity = $this->toEntity($inputResource, $writeContext);
+        $createdResources = new ResourceCollection();
 
-        // Save the entity
-        $entity = $this->saveEntity($request, $entity);
+        $readContext = $this->getContext(Action::VIEW);
+
+        // now save all resources
+        foreach ($inputResources as $inputResource) {
+            $entity = $this->toEntity($inputResource, $writeContext);
+
+            // Save the entity
+            $entity = $this->saveEntity($request, $entity);
+
+            $createdResources->add($this->toResource($entity, $readContext));
+        }
 
         // Turn back into a resource
-        return $this->createViewEntityResponse($entity)->setStatusCode(201);
+        if (
+            count($inputResources) > 0 ||
+            $inputResources->getMeta('bulk')
+                // bulk is a meta flag that can be set by the input parser, to note that, even if only
+                // one resource was submitted, the response should still be an array.
+        ) {
+            $response = $this->getResourceResponse($createdResources, $readContext);
+        } else {
+            // only take the first (and only) resource
+            $response = $this->getResourceResponse($createdResources->first(), $readContext);
+        }
+
+        $response->setStatusCode(201);
+        return $response;
     }
 
     /**

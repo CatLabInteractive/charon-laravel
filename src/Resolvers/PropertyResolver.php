@@ -146,6 +146,6 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             return $models;
         }
 
-        return null;
+        return $models;
     }
 }
