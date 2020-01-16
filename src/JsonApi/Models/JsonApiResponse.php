@@ -72,6 +72,16 @@ class JsonApiResponse extends ResourceResponse
             $this->addIncluded($included);
         }
 
+        if (isset($this->output['included'])
+            && count($this->output['included']) === 0) {
+            unset($this->output['included']);
+        }
+
+        if (isset($this->output['meta'])
+            && count($this->output['meta']) === 0) {
+            unset($this->output['meta']);
+        }
+
         return $this->output;
     }
 
