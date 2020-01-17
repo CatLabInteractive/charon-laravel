@@ -258,4 +258,28 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
 
         return $this->contentTypeParameters;
     }
+
+    /**
+     * @param DescriptionBuilder $builder
+     * @param Route $route
+     * @param ResourceParameter $parameter
+     * @param ResourceDefinition $resourceDefinition
+     * @param null $resource
+     * @return ParameterCollection
+     */
+    public function getResourceRouteParameters(
+        DescriptionBuilder $builder,
+        Route $route,
+        ResourceParameter $parameter,
+        ResourceDefinition $resourceDefinition,
+        $action,
+        $resource = null
+    ): ParameterCollection
+    {
+        $out = parent::getResourceRouteParameters($builder, $route, $parameter, $resourceDefinition, $action, $resource);
+
+        $route->consumes($this->contentType . ' ext=bulk');
+
+        return $out;
+    }
 }
