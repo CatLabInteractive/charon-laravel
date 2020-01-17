@@ -13,7 +13,7 @@ use CatLab\Charon\Models\Values\Base\RelationshipValue;
  * Class PaginationProcessor
  * @package CatLab\Charon\Laravel\JsonApi\Processors
  */
-class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
+class PaginationProcessor extends \CatLab\Charon\Laravel\Processors\PaginationProcessor
 {
 
 }
