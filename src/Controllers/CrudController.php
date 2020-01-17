@@ -167,7 +167,8 @@ trait CrudController
      * @return ResourceResponse
      * @throws EntityNotFoundException
      * @throws RequirementValidationException
-     * @throws AuthorizationException*@throws \CatLab\Requirements\Exceptions\ValidationException
+     * @throws AuthorizationException*
+     * @throws \CatLab\Requirements\Exceptions\ValidationException
      * @throws ValidationException
      */
     public function edit(Request $request)
@@ -186,6 +187,45 @@ trait CrudController
 
         try {
             $inputResource->validate($writeContext, $entity);
+        } catch (ResourceValidationException $e) {
+            return $this->getValidationErrorResponse($e);
+        }
+
+        $entity = $this->toEntity($inputResource, $writeContext, $entity);
+
+        // Save the entity
+        $entity = $this->saveEntity($request, $entity);
+
+        // Turn back into a resource
+        return $this->createViewEntityResponse($entity);
+    }
+
+    /**
+     * Patch is similar to edit, but only the provided fields are validated & stored.
+     * @param Request $request
+     * @return ResourceResponse
+     * @throws EntityNotFoundException
+     * @throws RequirementValidationException
+     * @throws AuthorizationException*
+     * @throws \CatLab\Requirements\Exceptions\ValidationException
+     * @throws ValidationException
+     */
+    public function patch(Request $request)
+    {
+        $this->request = $request;
+
+        $entity = $this->findEntity($request);
+        if (!$entity) {
+            throw new EntityNotFoundException('Could not find entity with id ' . $entity->id);
+        }
+
+        $this->authorizeEdit($request, $entity);
+
+        $writeContext = $this->getContext(Action::EDIT);
+        $inputResource = $this->bodyToResource($writeContext);
+
+        try {
+            $inputResource->validate($writeContext, $entity, '', false);
         } catch (ResourceValidationException $e) {
             return $this->getValidationErrorResponse($e);
         }
