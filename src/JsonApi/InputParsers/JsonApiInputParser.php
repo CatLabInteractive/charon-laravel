@@ -10,6 +10,7 @@ use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\DescriptionBuilder;
 use CatLab\Charon\Interfaces\InputParser;
 use CatLab\Charon\Interfaces\ResourceDefinition;
+use CatLab\Charon\Interfaces\ResourceDefinitionFactory;
 use CatLab\Charon\Interfaces\ResourceTransformer;
 
 use CatLab\Charon\Laravel\InputParsers\LaravelInputParser;
@@ -51,14 +52,14 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
     /**
      * Look for identifier input
      * @param ResourceTransformer $resourceTransformer
-     * @param ResourceDefinition $resourceDefinition
+     * @param ResourceDefinitionFactory $resourceDefinition
      * @param Context $context
      * @param null $resource
      * @return IdentifierCollection|null
      */
     public function getIdentifiers(
         ResourceTransformer $resourceTransformer,
-        ResourceDefinition $resourceDefinition,
+        ResourceDefinitionFactory $resourceDefinition,
         Context $context,
         $resource = null
     ) {
@@ -99,14 +100,14 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
 
     /**
      * @param ResourceTransformer $resourceTransformer
-     * @param ResourceDefinition $resourceDefinition
+     * @param ResourceDefinitionFactory $resourceDefinition
      * @param Context $context
      * @param null $request
      * @return ResourceCollection|null
      */
     public function getResources(
         ResourceTransformer $resourceTransformer,
-        ResourceDefinition $resourceDefinition,
+        ResourceDefinitionFactory $resourceDefinition,
         Context $context,
         $request = null
     ) {

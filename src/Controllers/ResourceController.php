@@ -48,8 +48,7 @@ trait ResourceController
 
     /**
      * From a query builder, filter models based on input and processor and return the resulting
-     * models.
-     * Since order is important, the returned Collection will be a plain laravel collection!
+     * models. Since order is important, the returned Collection will be a plain laravel collection!
      * @param $queryBuilder
      * @param Context $context
      * @param ResourceDefinition|string|null $resourceDefinition
@@ -79,8 +78,8 @@ trait ResourceController
      */
     protected function applyGlobalFilters(
         $queryBuilder,
-        ResourceDefinitionContract $resourceDefinition,
-        Context $context
+        ResourceDefinitionContract $resourceDefinition = null,
+        Context $context = null
     ) {
 
     }
@@ -98,6 +97,7 @@ trait ResourceController
      * @throws \CatLab\Charon\Exceptions\IterableExpected
      * @throws \CatLab\Charon\Exceptions\NotImplementedException
      * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      * @deprecated Use getModels()
      */
     public function filterAndGet($queryBuilder, $resourceDefinition, Context $context, $records = null)
@@ -106,14 +106,18 @@ trait ResourceController
             $records = $this->getRecordLimit();
         }
 
-        $filterResults = $this->resourceTransformer->applyFilters(
-            $this->getRequest()->query(),
-            $resourceDefinition,
-            $context,
-            $queryBuilder
-        );
+        if ($resourceDefinition) {
+            $filterResults = $this->resourceTransformer->applyFilters(
+                $this->getRequest()->query(),
+                $resourceDefinition,
+                $context,
+                $queryBuilder
+            );
 
-        $queryBuilder = $filterResults->getQueryBuilder();
+            $queryBuilder = $filterResults->getQueryBuilder();
+        } else {
+            $filterResults = null;
+        }
 
         // apply global filters.
         $this->applyGlobalFilters($queryBuilder, $resourceDefinition, $context);
@@ -132,11 +136,12 @@ trait ResourceController
             $models = $queryBuilder;
         }
 
-        if ($filterResults->isReversed()) {
+        if ($filterResults && $filterResults->isReversed()) {
             $models = $models->reverse();
         }
 
-        return $this->resourceTransformer->toResources($resourceDefinition, $models, $context, $filterResults);
+        //return $this->resourceTransformer->toResources($resourceDefinition, $models, $context, $filterResults);
+        return $this->toResources($models, $context, $resourceDefinition, $filterResults);
     }
 
     /**
@@ -198,20 +203,21 @@ trait ResourceController
      * @param mixed $entities
      * @param Context $context
      * @param null $resourceDefinition
+     * @param null $filterResults
      * @return ResourceCollection
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
      * @throws \CatLab\Charon\Exceptions\InvalidEntityException
      * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
      * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      * @throws \CatLab\Charon\Exceptions\IterableExpected
-     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
-    public function toResources($entities, Context $context, $resourceDefinition = null) : ResourceCollection
+    public function toResources($entities, Context $context, $resourceDefinition = null, $filterResults = null) : ResourceCollection
     {
         return $this->resourceTransformer->toResources(
             $resourceDefinition ?? $this->resourceDefinition,
             $entities,
-            $context
+            $context,
+            $filterResults
         );
     }
 

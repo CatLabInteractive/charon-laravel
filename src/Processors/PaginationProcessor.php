@@ -63,7 +63,7 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
     public function processCollection(
         ResourceTransformer $transformer,
         ResourceCollection $collection,
-        ResourceDefinition $definition,
+        $definition,
         Context $context,
         FilterResults $filterResults = null,
         RelationshipValue $parent = null,

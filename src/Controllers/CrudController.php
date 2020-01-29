@@ -126,6 +126,10 @@ trait CrudController
         foreach ($inputResources as $inputResource) {
             try {
                 $inputResource->validate($writeContext);
+
+                // also see if we can create this entity.
+                $this->authorizeCreateFromResource($request, $inputResource);
+
             } catch (ResourceValidationException $e) {
                 return $this->getValidationErrorResponse($e);
             }
@@ -413,6 +417,18 @@ trait CrudController
     protected function authorizeCreate(Request $request)
     {
         $this->authorizeCrudRequest(Action::CREATE);
+    }
+
+    /**
+     * Similar to authorizeCreate, but it checks each individual resource instead
+     * of a global 'create'.
+     * @param Request $request
+     * @param \CatLab\Charon\Interfaces\RESTResource $resource
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    protected function authorizeCreateFromResource(Request $request, RESTResource $resource)
+    {
+        // by default nothing happens.
     }
 
     /**

@@ -28,6 +28,7 @@ use CatLab\Charon\Laravel\ResourceTransformer;
 use CatLab\Charon\Library\ResourceDefinitionLibrary;
 use CatLab\Charon\Models\Context;
 use CatLab\Charon\Models\Properties\RelationshipField;
+use CatLab\Charon\Models\StaticResourceDefinitionFactory;
 use CatLab\Charon\Pagination\PaginationBuilder;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Database\Eloquent\Model;
@@ -53,6 +54,7 @@ trait JsonApiResourceController
      * @param null $options
      * @return RouteCollection
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public static function setJsonApiRoutes(
         RouteCollection $routes,
@@ -62,6 +64,8 @@ trait JsonApiResourceController
         $controller = null,
         $options = []
     ) {
+        $resourceDefinitionFactory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($resourceDefinition);
+
         if (!isset($controller)) {
             $controller = class_basename(static::class);
         }
@@ -75,27 +79,26 @@ trait JsonApiResourceController
         }
 
         $childResource = $routes->resource(
-            $resourceDefinition,
+            $resourceDefinitionFactory,
             $path,
             $controller,
             $options
         );
 
         // we need to create a ResourceDefinition object to create the 'linkable' endpoints
-        $resourceDefinitionObject = ResourceDefinitionLibrary::make($resourceDefinition);
+        $resourceDefinitionObject = $resourceDefinitionFactory->getDefault();
         foreach ($resourceDefinitionObject->getFields()->getRelationships() as $field)  {
             self::addLinkRelationshipEndpoint($childResource, $field, $path, $resourceId, $controller, $options);
         }
 
         // add support for batch update
         $childResource->patch($path, $controller . '@batchEdit')
-            ->summary(function () use ($resourceDefinition) {
-                $entityName = ResourceDefinitionLibrary::make($resourceDefinition)
-                    ->getEntityName(true);
+            ->summary(function () use ($resourceDefinitionObject) {
+                $entityName = $resourceDefinitionObject->getEntityName(true);
 
                 return 'Batch update multiple ' . $entityName;
             })
-            ->parameters()->resource($resourceDefinition)->many()->required()
+            ->parameters()->resource($resourceDefinitionObject)->many()->required()
             ->returns()->statusCode(200)->many($resourceDefinition);
 
         return $childResource;
@@ -109,6 +112,7 @@ trait JsonApiResourceController
      * @param null $controller
      * @param null $options
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     protected static function addLinkRelationshipEndpoint(
         RouteCollection $routes,
