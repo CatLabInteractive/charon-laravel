@@ -19,6 +19,7 @@ use CatLab\Charon\Interfaces\SerializableResource;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition as ResourceDefinitionContract;
 use CatLab\Charon\Interfaces\ResourceTransformer as ResourceTransformerContract;
+use CatLab\Charon\Models\StaticResourceDefinitionFactory;
 use CatLab\Charon\Resolvers\RequestResolver;
 use CatLab\Charon\Laravel\Contracts\Response as ResponseContract;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
@@ -37,7 +38,7 @@ use Response;
 trait ResourceController
 {
     /**
-     * @var ResourceDefinitionContract
+     * @var string|ResourceDefinitionContract|\CatLab\Charon\Interfaces\ResourceFactory
      */
     protected $resourceDefinition;
 
@@ -61,6 +62,7 @@ trait ResourceController
      * @throws \CatLab\Charon\Exceptions\IterableExpected
      * @throws \CatLab\Charon\Exceptions\NotImplementedException
      * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function getResources($queryBuilder, Context $context, $resourceDefinition = null, $records = null)
     {
@@ -106,7 +108,10 @@ trait ResourceController
             $records = $this->getRecordLimit();
         }
 
+        $factory = null;
         if ($resourceDefinition) {
+            $factory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($resourceDefinition);
+
             $filterResults = $this->resourceTransformer->applyFilters(
                 $this->getRequest()->query(),
                 $resourceDefinition,
@@ -120,7 +125,7 @@ trait ResourceController
         }
 
         // apply global filters.
-        $this->applyGlobalFilters($queryBuilder, $resourceDefinition, $context);
+        $this->applyGlobalFilters($queryBuilder, $factory ? $factory->getDefault() : null, $context);
 
         // Process eager loading
         $this->resourceTransformer->processEagerLoading($queryBuilder, $resourceDefinition, $context);
@@ -150,8 +155,8 @@ trait ResourceController
      * @return $this
      */
     public function setResourceDefinition(
-        ResourceDefinitionContract $resourceDefinition,
-        ResourceTransformerContract $resourceTransformer = null
+        $resourceDefinition,
+        $resourceTransformer = null
     ) {
         $this->resourceDefinition = $resourceDefinition;
 
@@ -164,10 +169,12 @@ trait ResourceController
 
     /**
      * @return ResourceDefinitionContract
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function getResourceDefinition(): ResourceDefinitionContract
     {
-        return $this->resourceDefinition;
+        $factory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($this->resourceDefinition);
+        return $factory->getDefault();
     }
 
     /**
@@ -230,6 +237,7 @@ trait ResourceController
      * @param null $entityFactory
      * @return mixed
      * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function toEntity(
         RESTResource $resource,
@@ -238,12 +246,10 @@ trait ResourceController
         $resourceDefinition = null,
         $entityFactory = null
     ) {
-        $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
         $entityFactory = $entityFactory ?? new EntityFactory();
 
         return $this->resourceTransformer->toEntity(
             $resource,
-            $resourceDefinition,
             $entityFactory,
             $context,
             $existingEntity

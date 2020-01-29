@@ -7,6 +7,7 @@ use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\Processor;
 use CatLab\Charon\Interfaces\ResourceCollection;
 use CatLab\Charon\Interfaces\ResourceDefinition;
+use CatLab\Charon\Interfaces\ResourceDefinitionFactory;
 use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Interfaces\RESTResource;
 use CatLab\Charon\Models\FilterResults;
@@ -63,13 +64,21 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
     public function processCollection(
         ResourceTransformer $transformer,
         ResourceCollection $collection,
-        $definition,
+        ResourceDefinitionFactory $definition,
         Context $context,
         FilterResults $filterResults = null,
         RelationshipValue $parent = null,
         $parentEntity = null
     ) {
-        list ($url, $cursor) = $this->prepareCursor($transformer, $collection, $definition, $context, $filterResults, $parent, $parentEntity);
+        list ($url, $cursor) = $this->prepareCursor(
+            $transformer,
+            $collection,
+            $definition->getDefault(),
+            $context,
+            $filterResults,
+            $parent,
+            $parentEntity
+        );
 
         if ($cursor) {
             $collection->addMeta('links', [
