@@ -99,7 +99,7 @@ trait JsonApiResourceController
                 return 'Batch update multiple ' . $entityName;
             })
             ->parameters()->resource($resourceDefinitionObject)->many()->required()
-            ->returns()->statusCode(200)->many($resourceDefinition);
+            ->returns()->statusCode(200)->many($resourceDefinitionFactory->getDefault());
 
         return $childResource;
     }
@@ -122,15 +122,14 @@ trait JsonApiResourceController
         $controller = null,
         $options = null
     ) {
-
-        $resourceDefinition = ResourceDefinitionLibrary::make($field->getResourceDefinition());
+        $resourceDefinitionFactory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($field->getResourceDefinition());
 
         $only = isset($options['only']) ? $options['only'] : [ 'view', 'patch' ];
 
         if (in_array('view', $only)) {
             $routes->get($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@viewRelationship')
-                ->summary(function () use ($field, $resourceDefinition) {
-                    $entityName = $resourceDefinition->getEntityName(false);
+                ->summary(function () use ($field, $resourceDefinitionFactory) {
+                    $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
 
                     if ($field->getCardinality() === Cardinality::MANY) {
                         $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
@@ -141,7 +140,7 @@ trait JsonApiResourceController
                     }
                 })
                 ->parameters()->path($resourceId)->string()->required()
-                ->returns()->statusCode(200)->one(get_class($field->getResourceDefinition()));
+                ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
         }
 
         /*
@@ -151,8 +150,8 @@ trait JsonApiResourceController
 
             // Replace the relationship with a completely new list.
             $routes->patch($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@updateRelationship')
-                ->summary(function () use ($field, $resourceDefinition) {
-                    $entityName = $resourceDefinition->getEntityName(false);
+                ->summary(function () use ($field, $resourceDefinitionFactory) {
+                    $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
 
                     if ($field->getCardinality() === Cardinality::MANY) {
                         $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
@@ -164,31 +163,31 @@ trait JsonApiResourceController
                 })
                 ->parameters()->path($resourceId)->string()->required()
                 ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)
-                ->returns()->statusCode(200)->one(get_class($field->getResourceDefinition()));
+                ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
 
             // POST relationship
             if ($field->getCardinality() === Cardinality::MANY) {
                 $routes->post($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@addToRelationship')
-                    ->summary(function () use ($field, $resourceDefinition) {
-                        $entityName = $resourceDefinition->getEntityName(false);
+                    ->summary(function () use ($field, $resourceDefinitionFactory) {
+                        $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
 
                         $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
                         return 'Add ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' to a ' . $entityName;
                     })
                     ->parameters()->path($resourceId)->string()->required()
                     ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
-                    ->returns()->statusCode(200)->one(get_class($field->getResourceDefinition()));
+                    ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
 
                 $routes->delete($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@addToRelationship')
-                    ->summary(function () use ($field, $resourceDefinition) {
-                        $entityName = $resourceDefinition->getEntityName(false);
+                    ->summary(function () use ($field, $resourceDefinitionFactory) {
+                        $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
 
                         $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
                         return 'Remove a ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' from a ' . $entityName;
                     })
                     ->parameters()->path($resourceId)->string()->required()
                     ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
-                    ->returns()->statusCode(200)->one(get_class($field->getResourceDefinition()));
+                    ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
             }
         }
 
