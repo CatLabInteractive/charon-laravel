@@ -141,7 +141,8 @@ class JsonApiResponse extends ResourceResponse
 
         foreach ($resource->getProperties()->toArray() as $property) {
             if ($property instanceof PropertyValue && $property->isVisible()) {
-                $data['attributes'][$property->getField()->getDisplayName()] = $property->getValue();
+                //$data['attributes'][$property->getField()->getDisplayName()] = $property->getValue();
+                $property->addToArray($data['attributes']);
             } elseif ($property instanceof RelationshipValue) {
                 if ($property instanceof ChildValue) {
                     $data['relationships'][$property->getField()->getDisplayName()] = [
