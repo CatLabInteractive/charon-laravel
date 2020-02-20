@@ -3,6 +3,8 @@
 namespace CatLab\Charon\Laravel\JsonApi\Models;
 
 use CatLab\Charon\Enums\Action;
+use CatLab\Charon\Enums\Cardinality;
+use CatLab\Charon\Models\Properties\Base\Field;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\Properties\ResourceField;
 use CatLab\Charon\Swagger\SwaggerBuilder;
@@ -49,16 +51,22 @@ abstract class ResourceDefinition extends \CatLab\Charon\Models\ResourceDefiniti
         ];
 
         foreach ($this->getFields() as $field) {
+
+            /** @var Field $field */
+            $expandedFieldPath = $this->getSwaggerFieldContainer(
+                $field->getDisplayName(),
+                $out['properties']['attributes']['properties']
+            );
+
+            $displayName = $expandedFieldPath[0];
+            $fieldContainer = &$expandedFieldPath[1]; // yep, by references. that's how we roll.
+
             if ($field instanceof RelationshipField && Action::isReadContext($action)) {
-
-                $out['properties']['relationships']['properties'][$field->getDisplayName()] = [
-
-                ];
-
+                $fieldContainer[$displayName] = $this->getRelationshipPropertySwaggerDescription($field);
             } else {
                 /** @var ResourceField $field */
                 if ($field->hasAction($action)) {
-                    $out['properties']['attributes']['properties'][$field->getDisplayName()] = $field->toSwagger($builder, $action);
+                    $fieldContainer[$displayName] = $field->toSwagger($builder, $action);
                 }
             }
         }
@@ -68,5 +76,65 @@ abstract class ResourceDefinition extends \CatLab\Charon\Models\ResourceDefiniti
         }
 
         return $out;
+    }
+
+    /**
+     * Resolve the dot notation in
+     * @param $fieldName
+     * @param $container
+     * @return array
+     */
+    private function getSwaggerFieldContainer($fieldName, &$container)
+    {
+        $fieldNamePath = explode('.', $fieldName);
+        while (count($fieldNamePath) > 1) {
+            $subPath = array_shift($fieldNamePath);
+            $container[$subPath] = [
+                'type' => 'object',
+                'properties' => []
+            ];
+
+            $container = &$container[$subPath]['properties'];
+        }
+
+        return [ array_shift($fieldNamePath), &$container ];
+    }
+
+    /**
+     * @param RelationshipField $field
+     * @return array
+     */
+    private function getRelationshipPropertySwaggerDescription(RelationshipField $field)
+    {
+        $description = [
+            'type' => 'object',
+            'properties' => [
+                'id' => [
+                    'type' => 'string'
+                ],
+                'type' => [
+                    'type' => 'string'
+                ]
+            ]
+        ];
+
+        if ($field->getCardinality() === Cardinality::ONE) {
+            return [
+                'type' => 'object',
+                'properties' => [
+                    'data' => $description
+                ]
+            ];
+        } else {
+            return [
+                'type' => 'object',
+                'properties' => [
+                    'data' => [
+                        'type' => 'array',
+                        'items' => $description
+                    ]
+                ]
+            ];
+        }
     }
 }
