@@ -158,11 +158,14 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
             // our system handles relationships in the same way as attributes, so...
             if (isset($resourceData['relationships'])) {
                 foreach ($resourceData['relationships'] as $relationshipName => $relationshipContent) {
-                    if (!isset($relationshipContent['data'])) {
+                    if (!array_key_exists('data', $relationshipContent)) {
                         continue;
                     }
 
-                    if ($related = $this->getRelationshipContent($relationshipContent)) { // variable assignment in if stagement
+                    // is null?
+                    if (!isset($relationshipContent['data'])) {
+                        $modelInput[$relationshipName] = null;
+                    } elseif ($related = $this->getRelationshipContent($relationshipContent)) { // variable assignment in if stagement
                         $modelInput[$relationshipName] = $related;
                     }
                 }
