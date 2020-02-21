@@ -86,15 +86,24 @@ class FieldSelectionTest extends BaseTest
                 'items' => [
                     [
                         'id' => 2,
-                        'alwaysVisibleField' => 'wololo'
+                        'alwaysVisibleField' => 'wololo',
+                        'alwaysVisibleRelationship' => [
+                            'link' => 'entity/2/alwaysVisibleRelationship'
+                        ]
                     ],
                     [
                         'id' => 3,
-                        'alwaysVisibleField' => 'wololo'
+                        'alwaysVisibleField' => 'wololo',
+                        'alwaysVisibleRelationship' => [
+                            'link' => 'entity/3/alwaysVisibleRelationship'
+                        ]
                     ],
                     [
                         'id' => 4,
-                        'alwaysVisibleField' => 'wololo'
+                        'alwaysVisibleField' => 'wololo',
+                        'alwaysVisibleRelationship' => [
+                            'link' => 'entity/4/alwaysVisibleRelationship'
+                        ]
                     ]
                 ]
             ]
@@ -125,15 +134,24 @@ class FieldSelectionTest extends BaseTest
                 'items' => [
                     [
                         'id' => 2,
-                        'alwaysVisibleField' => 'wololo'
+                        'alwaysVisibleField' => 'wololo',
+                        'alwaysVisibleRelationship' => [
+                            'link' => 'entity/2/alwaysVisibleRelationship'
+                        ]
                     ],
                     [
                         'id' => 3,
-                        'alwaysVisibleField' => 'wololo'
+                        'alwaysVisibleField' => 'wololo',
+                        'alwaysVisibleRelationship' => [
+                            'link' => 'entity/3/alwaysVisibleRelationship'
+                        ]
                     ],
                     [
                         'id' => 4,
-                        'alwaysVisibleField' => 'wololo'
+                        'alwaysVisibleField' => 'wololo',
+                        'alwaysVisibleRelationship' => [
+                            'link' => 'entity/4/alwaysVisibleRelationship'
+                        ]
                     ]
                 ]
             ]

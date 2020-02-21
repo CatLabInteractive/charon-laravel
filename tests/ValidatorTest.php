@@ -42,13 +42,16 @@ class ValidatorTest extends BaseTest
         );
 
         $resource->validate($context);
+        $this->assertTrue(true);
     }
 
     /**
-     * @expectedException \CatLab\Requirements\Exceptions\ResourceValidationException
+     *
      */
     public function testPetNotEnoughPhotos()
     {
+        $this->expectException(\CatLab\Requirements\Exceptions\ResourceValidationException::class);
+
         $transformer = $this->getResourceTransformer();
         $context = new Context(Action::CREATE);
 
