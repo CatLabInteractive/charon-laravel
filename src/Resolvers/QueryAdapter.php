@@ -172,15 +172,14 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         $records,
         $skip
     ) {
-        if (!$queryBuilder instanceof Builder) {
-            throw new \InvalidArgumentException('$queryBuilder is expected to be of type ' . Builder::class . ', ' . get_class($queryBuilder) . ' provided.');
-        }
+        $this->checkValidQueryBuilder($queryBuilder);
 
         $queryBuilder->take($records);
 
         if ($skip) {
             $queryBuilder->skip($skip);
         }
+        return;
     }
 
     /**
