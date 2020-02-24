@@ -7,7 +7,9 @@ use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Factories\ResourceFactory;
 use CatLab\Charon\Laravel\Factories\EntityFactory;
+use CatLab\Charon\Laravel\Models\ModelFilterResults;
 use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
+use CatLab\Charon\Models\FilterResults;
 use CatLab\Charon\Models\ResourceDefinition;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
@@ -104,6 +106,34 @@ trait ResourceController
      */
     public function filterAndGet($queryBuilder, $resourceDefinition, Context $context, $records = null)
     {
+        $modelFilterResults = $this->getModels($queryBuilder, $context, $resourceDefinition, $records);
+
+        //return $this->resourceTransformer->toResources($resourceDefinition, $models, $context, $filterResults);
+        return $this->toResources(
+            $modelFilterResults->getModels(),
+            $context,
+            $resourceDefinition,
+            $modelFilterResults->getFilterResults()
+        );
+    }
+
+    /**
+     * From a query builder, filter models based on input and processor and return the resulting
+     * models.
+     * Since order is important, the returned Collection will be a plain laravel collection!
+     * @param $queryBuilder
+     * @param \CatLab\Charon\Models\Context $context
+     * @param ResourceDefinition|string|null $resourceDefinition
+     * @param int|null $records
+     * @return ModelFilterResults
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
+     */
+    public function getModels(
+        $queryBuilder,
+        \CatLab\Charon\Models\Context $context,
+        $resourceDefinition = null,
+        $records = null
+    ) {
         if (!isset($records)) {
             $records = $this->getRecordLimit();
         }
@@ -145,8 +175,7 @@ trait ResourceController
             $models = $models->reverse();
         }
 
-        //return $this->resourceTransformer->toResources($resourceDefinition, $models, $context, $filterResults);
-        return $this->toResources($models, $context, $resourceDefinition, $filterResults);
+        return new ModelFilterResults($models, $filterResults);
     }
 
     /**
