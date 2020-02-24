@@ -5,8 +5,8 @@ namespace CatLab\Charon\Laravel\Controllers;
 use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Enums\Action;
-use CatLab\Charon\Factories\EntityFactory;
 use CatLab\Charon\Factories\ResourceFactory;
+use CatLab\Charon\Laravel\Factories\EntityFactory;
 use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
 use CatLab\Charon\Models\ResourceDefinition;
 use CatLab\Charon\Models\RESTResource;
@@ -196,6 +196,7 @@ trait ResourceController
      * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      * @throws \CatLab\Charon\Exceptions\IterableExpected
      * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function toResource($entity, Context $context, $resourceDefinition = null) : RESTResource
     {
@@ -217,6 +218,7 @@ trait ResourceController
      * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
      * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      * @throws \CatLab\Charon\Exceptions\IterableExpected
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function toResources($entities, Context $context, $resourceDefinition = null, $filterResults = null) : ResourceCollection
     {
@@ -232,9 +234,9 @@ trait ResourceController
      * Transform a resource into (an existing?) entity.
      * @param RESTResource $resource
      * @param Context $context
-     * @param null $existingEntity
-     * @param null $resourceDefinition
-     * @param null $entityFactory
+     * @param mixed|null $existingEntity
+     * @param ResourceDefinitionContract|null $resourceDefinition
+     * @param \CatLab\Charon\Interfaces\EntityFactory|null $entityFactory
      * @return mixed
      * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
@@ -262,6 +264,7 @@ trait ResourceController
      * @return RESTResource
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
      * @throws \CatLab\Charon\Exceptions\NoInputDataFound
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function bodyToResource(Context $context, $resourceDefinition = null) : RESTResource
     {
@@ -274,6 +277,7 @@ trait ResourceController
      * @param null $resourceDefinition
      * @return \CatLab\Charon\Collections\ResourceCollection
      * @throws \CatLab\Charon\Exceptions\NoInputDataFound
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function bodyToResources(Context $context, $resourceDefinition = null) : ResourceCollection
     {
@@ -286,6 +290,7 @@ trait ResourceController
      * @param $resourceDefinition
      * @return array
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function bodyIdentifiersToEntities(Context $context, $resourceDefinition = null)
     {
@@ -369,6 +374,7 @@ trait ResourceController
      * @throws \CatLab\Charon\Exceptions\IterableExpected
      * @throws \CatLab\Charon\Exceptions\NotImplementedException
      * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     protected function outputList($models, array $parameters = [], $resourceDefinition = null)
     {
@@ -388,6 +394,7 @@ trait ResourceController
      * @throws \CatLab\Charon\Exceptions\IterableExpected
      * @throws \CatLab\Charon\Exceptions\NotImplementedException
      * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     protected function filteredModelsToResources($models, array $parameters = [], $resourceDefinition = null)
     {
@@ -445,7 +452,7 @@ trait ResourceController
      * Notice: When non-model content is found, it is returned "as-is".
      * @param Model|Model[] $models
      * @param Context $context
-     * @param null $resourceDefinition
+     * @param ResourceDefinitionContract|null $resourceDefinition
      * @return RESTResource|RESTResource[]|mixed
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
      * @throws \CatLab\Charon\Exceptions\InvalidEntityException
@@ -453,6 +460,7 @@ trait ResourceController
      * @throws \CatLab\Charon\Exceptions\InvalidTransformer
      * @throws \CatLab\Charon\Exceptions\IterableExpected
      * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      * @deprecated Use toResources() or toResource().
      */
     protected function modelsToResources($models, Context $context, $resourceDefinition = null)
