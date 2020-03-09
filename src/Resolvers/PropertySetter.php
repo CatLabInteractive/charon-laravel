@@ -187,6 +187,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      */
     protected function removeChildrenFromEntity($entity, $name, $childEntities, $parameters = [])
     {
+        /** @var $entity Model */
         if ($entity instanceof Model) {
             $entity->removeChildrenFromEntity($name, $childEntities, $parameters);
             return;
@@ -203,6 +204,18 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
             if ($relationship instanceof BelongsToMany) {
                 foreach ($childEntities as $childEntity) {
                     $relationship->detach($childEntity);
+
+                    /*
+                    if ($entity->relationLoaded($name)) {
+                        $entity->setRelation(
+                            $name,
+                            $entity
+                                ->getRelation($name)
+                                ->filter(function($value, $key) use ($childEntity) {
+                                    return $childEntity->id != $value->id;
+                                })
+                        );
+                    }*/
                 }
             } else {
                 throw new PropertySetterException("Relationship of type " . get_class($relationship) . " is not " .

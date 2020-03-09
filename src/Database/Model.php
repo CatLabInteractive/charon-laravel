@@ -139,8 +139,11 @@ class Model extends \Illuminate\Database\Eloquent\Model
         }
 
         foreach ($childEntities as $child) {
-            $this->$name->add($child);
             $this->addedChildren[$name][] = $child;
+
+            // make sure it is also added to the local collection
+            // (this automagically loads the relationships so this might cause db queries)
+            $this->$name->add($child);
         }
     }
 
@@ -173,8 +176,12 @@ class Model extends \Illuminate\Database\Eloquent\Model
 
         foreach ($childEntities as $child) {
             $this->removedChildren[$name][] = $child;
-        }
 
-        //$this->$name = $this->$name->except($childEntities);
+            if ($this->relationLoaded($name)) {
+                $this->setRelation($name, $this->getRelation($name)->filter(function($value, $key) use ($child) {
+                    return $value->id !== $child->id;
+                }));
+            }
+        }
     }
 }
