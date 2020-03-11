@@ -201,8 +201,9 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
                         $comparison->getOperator()
                     );
                 } else {
+                    $entityType = is_object($field) ? get_class($field) : gettype($field);
                     throw new \InvalidArgumentException(
-                        'WhereParameter requires a Field to be set as entity; ' . get_class($field) . ' provided.'
+                        'WhereParameter requires a Field to be set as entity; ' . $entityType . ' provided.'
                     );
                 }
             }
