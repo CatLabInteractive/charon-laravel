@@ -4,11 +4,9 @@ namespace Tests;
 
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
-use CatLab\Charon\Laravel\InputParsers\PostInputParser;
 use CatLab\Charon\Models\Context;
-use CatLab\Charon\Swagger\Authentication\OAuth2Authentication;
-use CatLab\Charon\Swagger\SwaggerBuilder;
-
+use CatLab\Charon\OpenApi\Authentication\OAuth2Authentication;
+use CatLab\Charon\OpenApi\V2\OpenApiV2Builder;
 use PHPUnit_Framework_TestCase;
 
 /**
@@ -24,7 +22,7 @@ class DescriptionTest extends BaseTest
     {
         $routes = require 'Petstore/routes.php';
 
-        $builder = new SwaggerBuilder('localhost', '/');
+        $builder = new OpenApiV2Builder('localhost', '/');
 
         $builder
             ->setTitle('Pet store API')

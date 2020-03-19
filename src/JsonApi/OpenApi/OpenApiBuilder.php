@@ -8,13 +8,13 @@ use CatLab\Charon\Laravel\Exceptions\InvalidResourceDefinitionException;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResource;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResourceCollection;
 use CatLab\Charon\Laravel\JsonApi\Models\ResourceDefinition;
-use CatLab\Charon\Swagger\SwaggerBuilder;
+use CatLab\Charon\OpenApi\V2\OpenApiV2Builder;
 
 /**
  * Class OpenAPIBuilder
  * @package CatLab\Charon\Laravel\JsonApi\OpenApi
  */
-class OpenAPIBuilder extends SwaggerBuilder
+class OpenAPIBuilder extends OpenApiV2Builder
 {
     /**
      * SwaggerBuilder constructor.
