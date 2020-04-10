@@ -25,7 +25,6 @@ use CatLab\Charon\Laravel\Resolvers\PropertyResolver;
 use CatLab\Charon\Laravel\Resolvers\PropertySetter;
 use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
 use CatLab\Charon\Laravel\ResourceTransformer;
-use CatLab\Charon\Library\ResourceDefinitionLibrary;
 use CatLab\Charon\Models\Context;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\StaticResourceDefinitionFactory;
@@ -200,6 +199,7 @@ trait JsonApiResourceController
      * @param $relationshipDisplayName
      * @return ResourceResponse
      * @throws EntityNotFoundException
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function viewRelationship(
         \Illuminate\Http\Request $request,
@@ -219,7 +219,7 @@ trait JsonApiResourceController
         }
 
         $resourceTransformer = $this->getResourceTransformer();
-        $relatedResourceDefinition = $field->getChildResourceDefinition();
+        $relatedResourceDefinitionFactory = $field->getChildResourceDefinitionFactory();
 
         switch ($field->getCardinality()) {
             case Cardinality::ONE:
@@ -231,7 +231,7 @@ trait JsonApiResourceController
                     $context
                 );
 
-                $resource = $this->toResource($related, $context, $relatedResourceDefinition);
+                $resource = $this->toResource($related, $context, $relatedResourceDefinitionFactory);
                 return $this->getResourceResponse($resource, $context);
 
             case Cardinality::MANY:
@@ -247,12 +247,12 @@ trait JsonApiResourceController
                 // fetch the records
                 $resources = $resourceTransformer->getQueryAdapter()->getRecords(
                     $resourceTransformer,
-                    $relatedResourceDefinition,
+                    $relatedResourceDefinitionFactory->getDefault(),
                     $context,
                     $relatedEntities
                 );
 
-                $resource = $this->toResources($resources, $context, $relatedResourceDefinition);
+                $resource = $this->toResources($resources, $context, $relatedResourceDefinitionFactory);
                 return $this->getResourceResponse($resource, $context);
 
             default:
