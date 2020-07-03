@@ -130,6 +130,8 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
         foreach ($filter->getSort() as $sort) {
             $field = $sort->getEntity();
             if ($field instanceof Field) {
+                $field->setRequiredForProcessor();
+
                 $transformer->getQueryAdapter()->applyPropertySorting(
                     $transformer,
                     $field->getResourceDefinition(),
