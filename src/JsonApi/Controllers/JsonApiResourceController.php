@@ -224,7 +224,7 @@ trait JsonApiResourceController
         switch ($field->getCardinality()) {
             case Cardinality::ONE:
                 $context = $this->getContext(Action::VIEW);
-                $related = $resourceTransformer->getPropertyResolver()->resolveManyRelationship(
+                $related = $resourceTransformer->getPropertyResolver()->resolveOneRelationship(
                     $resourceTransformer,
                     $entity,
                     $field,
@@ -237,12 +237,17 @@ trait JsonApiResourceController
             case Cardinality::MANY:
                 $context = $this->getContext(Action::INDEX);
 
-                $relatedEntities = $resourceTransformer->getPropertyResolver()->resolveOneRelationship(
+                $relatedEntities = $resourceTransformer->getPropertyResolver()->resolveManyRelationship(
                     $resourceTransformer,
                     $entity,
                     $field,
                     $context
                 );
+
+                $resources = $this->getResources($relatedEntities, $context, $relatedResourceDefinitionFactory);
+                return $this->getResourceResponse($resources, $context);
+
+                /*
 
                 // fetch the records
                 $resources = $resourceTransformer->getQueryAdapter()->getRecords(
@@ -254,6 +259,7 @@ trait JsonApiResourceController
 
                 $resource = $this->toResources($resources, $context, $relatedResourceDefinitionFactory);
                 return $this->getResourceResponse($resource, $context);
+                */
 
             default:
                 throw new \InvalidArgumentException('Relationship has invalid cardinality.');

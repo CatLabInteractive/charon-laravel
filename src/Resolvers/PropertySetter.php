@@ -143,7 +143,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
         Context $context
     ) {
         list ($entity, $name, $parameters) = $this->resolvePath($transformer, $entity, $field, $context);
-        $existingChildren = $this->getValueFromEntity($entity, $name, $parameters);
+        $existingChildren = $this->getValueFromEntity($entity, $name, $parameters, $context);
 
         if ($existingChildren instanceof Relation) {
             $children = clone $existingChildren;

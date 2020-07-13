@@ -2,9 +2,11 @@
 
 namespace CatLab\Charon\Laravel\Resolvers;
 
+use App\Models\User;
 use CatLab\Base\Enum\Operator;
 use CatLab\Charon\Collections\PropertyValueCollection;
 use CatLab\Charon\Collections\ResourceCollection;
+use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Exceptions\InvalidPropertyException;
 use CatLab\Charon\Exceptions\VariableNotFoundInContext;
 use CatLab\Charon\Interfaces\Context;
@@ -23,23 +25,43 @@ use Illuminate\Support\Collection;
 
 /**
  * Class PropertyResolver
+ *
+ * Resolve (get) data from entities.
+ *
+ * Order of resolvement:
+ * 1. check for getFieldNameIdentifier() method (if action === identifier)
+ * 2. check for getFieldName() method
+ * 3. check for laravel relationship (with support for action === identifier)
+ * 4. check for isFieldName() method
+ * 5. return stdObject->$fieldName
+ *
  * @package CatLab\RESTResource\Laravel\Resolvers
  */
 class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
 {
+    const GETTER_PREFIX = 'get';
+    const GETTER_BOOLEAN_PREFIX = 'is';
+    const GETTER_IDENTIFIER_POSTFIX = 'Identifier';
+
     /**
-     * @param mixed $entity
-     * @param string $name
-     * @param mixed[] $getterParameters
-     * @return mixed
+     * @param $entity
+     * @param $name
+     * @param array $getterParameters
+     * @param Context $context
+     * @return mixed|null
      */
-    protected function getValueFromEntity($entity, $name, array $getterParameters)
+    protected function getValueFromEntity($entity, $name, array $getterParameters, Context $context)
     {
         /** @var Model $entity */
 
+        // Check if we only want the identifier
+        if ($context->getAction() === Action::IDENTIFIER && $this->methodExists($entity, self::GETTER_PREFIX.ucfirst($name).self::GETTER_IDENTIFIER_POSTFIX)) {
+            return call_user_func_array(array($entity, self::GETTER_PREFIX.ucfirst($name).self::GETTER_IDENTIFIER_POSTFIX), $getterParameters);
+        }
+
         // Check for get method
-        if ($this->methodExists($entity, 'get'.ucfirst($name))) {
-            return call_user_func_array(array($entity, 'get'.ucfirst($name)), $getterParameters);
+        if ($this->methodExists($entity, self::GETTER_PREFIX.ucfirst($name))) {
+            return call_user_func_array(array($entity, self::GETTER_PREFIX.ucfirst($name)), $getterParameters);
         }
 
         // Check for laravel "relationship" method
@@ -51,20 +73,36 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
             ) {
                 return $entity->$name;
             } else {
-                $child = call_user_func_array(array($entity, $name), $getterParameters);
 
-                if ($child instanceof BelongsTo) {
-                    $child = $child->get()->first();
-                } elseif ($child instanceof HasOne) {
-                    $child = $child->get()->first();
+                $relation = call_user_func_array(array($entity, $name), $getterParameters);
+
+                if ($relation instanceof BelongsTo) {
+
+                    // Do we just want the identifier?
+                    if ($context->getAction() === Action::IDENTIFIER) {
+                        // Create a new 'related' instance and only fill in the identifier.
+                        $foreignId = $entity->getAttribute($relation->getForeignKey());
+                        if ($foreignId) {
+                            $instance =  $relation->getRelated()->newInstance();
+                            $instance->{$relation->getOwnerKey()} = $entity->getAttribute($relation->getForeignKey());
+
+                            return $instance;
+                        } else {
+                            return null;
+                        }
+                    }
+
+                    $relation = $relation->get()->first();
+                } elseif ($relation instanceof HasOne) {
+                    $relation = $relation->get()->first();
                 }
 
-                return $child;
+                return $relation;
             }
         }
 
-        elseif ($this->methodExists($entity, 'is'.ucfirst($name))) {
-            return call_user_func_array(array($entity, 'is'.ucfirst($name)), $getterParameters);
+        elseif ($this->methodExists($entity, self::GETTER_BOOLEAN_PREFIX.ucfirst($name))) {
+            return call_user_func_array(array($entity, self::GETTER_BOOLEAN_PREFIX.ucfirst($name)), $getterParameters);
         }
 
         else {
