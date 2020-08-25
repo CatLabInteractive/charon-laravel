@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
  */
 class JsonApiRequestResolver extends RequestResolver
 {
+    const PAGE_PARAMETER = 'number';
+
     /**
      * @param $request
      * @param ResourceField $field

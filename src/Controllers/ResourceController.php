@@ -122,15 +122,15 @@ trait ResourceController
      * models.
      * Since order is important, the returned Collection will be a plain laravel collection!
      * @param $queryBuilder
-     * @param \CatLab\Charon\Models\Context $context
-     * @param ResourceDefinition|string|null $resourceDefinition
-     * @param int|null $records
+     * @param Context $context
+     * @param null $resourceDefinition
+     * @param null $records
      * @return ModelFilterResults
      * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function getModels(
         $queryBuilder,
-        \CatLab\Charon\Models\Context $context,
+        Context $context,
         $resourceDefinition = null,
         $records = null
     ) {
@@ -445,7 +445,7 @@ trait ResourceController
     {
         $records = $this->getResourceTransformer()->getRequestResolver()->getRecords(Request::instance());
         if (!$records) {
-            return 10;
+            return 3;
         }
         return $records;
     }
