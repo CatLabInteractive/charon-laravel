@@ -6,13 +6,11 @@ use CatLab\Base\Interfaces\Database\SelectQueryParameters;
 use CatLab\Base\Interfaces\Database\WhereParameter;
 use CatLab\Base\Interfaces\Grammar\AndConjunction;
 use CatLab\Base\Interfaces\Grammar\OrConjunction;
-use CatLab\Charon\Exceptions\NotImplementedException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceCollection;
 use CatLab\Charon\Interfaces\ResourceDefinition;
 use CatLab\Charon\Interfaces\ResourceDefinitionFactory;
 use CatLab\Charon\Interfaces\ResourceTransformer;
-use CatLab\Charon\Interfaces\RESTResource;
 use CatLab\Charon\Models\FilterResults;
 use CatLab\Charon\Models\Properties\Base\Field;
 use CatLab\Charon\Models\Values\Base\RelationshipValue;
@@ -23,43 +21,6 @@ use CatLab\Charon\Models\Values\Base\RelationshipValue;
  */
 class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
 {
-    /**
-     * @inheritDoc
-     */
-    /*
-    public function processFilters(
-        ResourceTransformer $transformer,
-        $queryBuilder,
-        $request,
-        ResourceDefinition $definition,
-        Context $context,
-        FilterResults $filterResults
-    ) {
-        $requestResolver = $transformer->getRequestResolver();
-
-        // the amount of records we want.
-        $records = $requestResolver->getRecords($request);
-        if ($records < 1) {
-            $records = config('eukles.default_records', 10);
-        }
-
-        // get the page we want
-        $page = $requestResolver->getPage($request);
-        if ($page < 1) {
-            $page = 1;
-        }
-
-        // First count the total amount of records
-        $totalAmountOfRecords = $queryBuilder->count();
-        $filterResults->setTotalRecords($totalAmountOfRecords);
-
-        $filterResults->setCurrentPage($page);
-        $filterResults->setRecords($records);
-
-        // now make the final selection
-        $queryBuilder->skip(($page - 1) * $records)->limit($records);
-    }*/
-
     /**
      * @inheritDoc
      */
@@ -89,7 +50,9 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
             ]);
 
             $collection->addMeta('pagination', [
-                'cursors' => $cursor->toArray()
+                'cursors' => $cursor->toArray(),
+                'next' => $cursor->getNext() ? $url . '?' . http_build_query($cursor->getNext()) : null,
+                'previous' => $cursor->getPrevious() ? $url . '?' . http_build_query($cursor->getPrevious()) : null
             ]);
         }
 
@@ -98,7 +61,7 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
                 'total' => $filterResults->getTotalRecords(),
                 'per-page' => $filterResults->getRecords(),
                 'current-page' => $filterResults->getCurrentPage(),
-                'last-page' => ceil($filterResults->getTotalRecords() / $filterResults->getRecords())
+                'last-page' => intval(ceil($filterResults->getTotalRecords() / $filterResults->getRecords()))
             ]);
         }
     }
@@ -108,15 +71,16 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
      * @param Context $context
      * @param ResourceDefinition $resourceDefinition
      * @param SelectQueryParameters $filter
-     * @param \Illuminate\Database\Query\Builder $queryBuilder
-     * @throws NotImplementedException
+     * @param null $queryBuilder
+     * @param FilterResults $filterResults
      */
     protected function processProcessorFilters(
         ResourceTransformer $transformer,
         Context $context,
         ResourceDefinition $resourceDefinition,
         SelectQueryParameters $filter,
-        $queryBuilder = null
+        $queryBuilder,
+        FilterResults $filterResults
     ) {
         $this->processWhereFilters(
             $transformer,
@@ -158,20 +122,8 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
                 $limit->getOffset()
             );
         }
-    }
 
-    /**
-     * @inheritDoc
-     */
-    public function processResource(
-        ResourceTransformer $transformer,
-        RESTResource $resource,
-        ResourceDefinition $definition,
-        Context $context,
-        RelationshipValue $parent = null,
-        $parentEntity = null
-    ) {
-        // TODO: Implement processResource() method.
+        $filterResults->setReversed($filter->isReverse());
     }
 
     /**

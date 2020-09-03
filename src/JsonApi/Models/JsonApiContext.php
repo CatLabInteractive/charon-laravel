@@ -40,7 +40,8 @@ class JsonApiContext extends Context
         $field = $fieldPath->getTopField();
 
         // check if this field was included
-        if (in_array($field->getDisplayName(), $this->globalIncludeFields)) {
+        $path = (string)$fieldPath;
+        if (in_array($path, $this->globalIncludeFields)) {
             return true;
         }
 
