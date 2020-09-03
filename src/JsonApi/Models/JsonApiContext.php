@@ -2,6 +2,8 @@
 
 namespace CatLab\Charon\Laravel\JsonApi\Models;
 
+use CatLab\Charon\Enums\Action;
+use CatLab\Charon\Interfaces\Context as ContextContract;
 use CatLab\Charon\Models\Context;
 use CatLab\Charon\Models\CurrentPath;
 
@@ -69,5 +71,19 @@ class JsonApiContext extends Context
         $this->globalIncludeFields[] = $field;
 
         return $this;
+    }
+
+    /**
+     * @param string $action
+     * @return ContextContract
+     */
+    protected function createChildContext($action = Action::INDEX)
+    {
+        $childContext = parent::createChildContext($action);
+
+        $childContext->globalIncludeFields = $this->globalIncludeFields;
+        $childContext->includeFields = $this->includeFields;
+
+        return $childContext;
     }
 }
