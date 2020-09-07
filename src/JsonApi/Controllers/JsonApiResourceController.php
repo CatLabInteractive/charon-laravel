@@ -231,6 +231,10 @@ trait JsonApiResourceController
                     $context
                 );
 
+                if (!$related) {
+                    $this->notFound(null, $this->getEntityClassName());
+                }
+
                 $resource = $this->toResource($related, $context, $relatedResourceDefinitionFactory);
                 return $this->getResourceResponse($resource, $context);
 
