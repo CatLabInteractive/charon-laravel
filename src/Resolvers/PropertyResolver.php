@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 
@@ -71,6 +72,11 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
 
                 $relation = call_user_func_array(array($entity, $name), $getterParameters);
 
+                // if this is a new entry, relation will always be null (and calling the relationship will destroy it)
+                if (!$entity->exists) {
+                    return null;
+                }
+
                 if ($relation instanceof BelongsTo) {
 
                     // Do we just want the identifier?
@@ -125,6 +131,9 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
     ) {
         /** @var Builder $entities */
         $entities = $this->resolveProperty($transformer, $parentEntity, $field, $context);
+        if ($entities === null) {
+            return null;
+        }
 
         foreach ($identifiers->toArray() as $identifier) {
             /** @var PropertyValue $identifier */
