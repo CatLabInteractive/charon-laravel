@@ -39,6 +39,104 @@ class Model extends \Illuminate\Database\Eloquent\Model
     }
 
     /**
+     * Add children to a related entity.
+     * @param string $relation
+     * @param Model[] $childEntities
+     * @param mixed[] $setterParameters
+     */
+    public function addChildrenToEntity($relation, array $childEntities, $setterParameters = [])
+    {
+        // For each relationship, keep a list of all children that were added.
+        if (!isset($this->addedChildren[$relation])) {
+            $this->addedChildren[$relation] = [];
+        }
+
+        foreach ($childEntities as $child) {
+            $this->addedChildren[$relation][] = $child;
+
+            // make sure it is also added to the local collection
+            // (this automagically loads the relationships so this might cause db queries)
+            $this->$relation->add($child);
+        }
+    }
+
+    /**
+     * @param string $relation
+     * @param Model[] $childEntities
+     * @param mixed[] $parameters
+     */
+    public function editChildrenInEntity($relation, $childEntities, $parameters)
+    {
+        // For each relationship, keep a list of all children that were added.
+        if (!isset($this->editedChildren[$relation])) {
+            $this->editedChildren[$relation] = [];
+        }
+
+        foreach ($childEntities as $childEntity) {
+            $this->editedChildren[$relation][] = $childEntity;
+        }
+    }
+
+    /**
+     * @param string $relation
+     * @param Model[] $childEntities
+     * @param mixed[] $parameters
+     */
+    public function removeChildrenFromEntity($relation, $childEntities, $parameters)
+    {
+        // For each relationship, keep a list of all children that were added.
+        if (!isset($this->removedChildren[$relation])) {
+            $this->removedChildren[$relation] = [];
+        }
+
+        foreach ($childEntities as $child) {
+            $this->removedChildren[$relation][] = $child;
+
+            if ($this->relationLoaded($relation)) {
+                $this->setRelation($relation, $this->getRelation($relation)->filter(function($value, $key) use ($child) {
+                    return $value->id !== $child->id;
+                }));
+            }
+        }
+    }
+
+    /**
+     * @param string $relation
+     * @return Model[]
+     */
+    public function getAddedChildren($relation)
+    {
+        if (isset($this->addedChildren[$relation])) {
+            return $this->addedChildren[$relation];
+        }
+        return [];
+    }
+
+    /**
+     * @param string $relation
+     * @return Model[]
+     */
+    public function getRemovedChildren($relation)
+    {
+        if (isset($this->removedChildren[$relation])) {
+            return $this->removedChildren[$relation];
+        }
+        return [];
+    }
+
+    /**
+     * @param string $relation
+     * @return Model[]
+     */
+    public function getEditedChildren($relation)
+    {
+        if (isset($this->editedChildren[$relation])) {
+            return $this->editedChildren[$relation];
+        }
+        return [];
+    }
+
+    /**
      * Save all related entities.
      * @throws PropertySetterException
      * @throws \Exception
@@ -122,66 +220,6 @@ class Model extends \Illuminate\Database\Eloquent\Model
         $toReload = array_keys($toReload);
         foreach ($toReload as $reload) {
             unset($this->relations[$reload]);
-        }
-    }
-
-    /**
-     * Add children to a related entity.
-     * @param $name
-     * @param array $childEntities
-     * @param array $setterParameters
-     */
-    public function addChildrenToEntity($name, array $childEntities, $setterParameters = [])
-    {
-        // For each relationship, keep a list of all children that were added.
-        if (!isset($this->addedChildren[$name])) {
-            $this->addedChildren[$name] = [];
-        }
-
-        foreach ($childEntities as $child) {
-            $this->addedChildren[$name][] = $child;
-
-            // make sure it is also added to the local collection
-            // (this automagically loads the relationships so this might cause db queries)
-            $this->$name->add($child);
-        }
-    }
-
-    /**
-     *
-     */
-    public function editChildrenInEntity($name, $childEntities, $parameters)
-    {
-        // For each relationship, keep a list of all children that were added.
-        if (!isset($this->editedChildren[$name])) {
-            $this->editedChildren[$name] = [];
-        }
-
-        foreach ($childEntities as $childEntity) {
-            $this->editedChildren[$name][] = $childEntity;
-        }
-    }
-
-    /**
-     * @param $name
-     * @param $childEntities
-     * @param $parameters
-     */
-    public function removeChildrenFromEntity($name, $childEntities, $parameters)
-    {
-        // For each relationship, keep a list of all children that were added.
-        if (!isset($this->removedChildren[$name])) {
-            $this->removedChildren[$name] = [];
-        }
-
-        foreach ($childEntities as $child) {
-            $this->removedChildren[$name][] = $child;
-
-            if ($this->relationLoaded($name)) {
-                $this->setRelation($name, $this->getRelation($name)->filter(function($value, $key) use ($child) {
-                    return $value->id !== $child->id;
-                }));
-            }
         }
     }
 }
