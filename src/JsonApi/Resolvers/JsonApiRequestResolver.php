@@ -30,11 +30,21 @@ class JsonApiRequestResolver extends RequestResolver
             return $request['filter'][$field->getDisplayName()];
         }
 
-        if (isset($request['filter'][$field->getDisplayName()])) {
-            return $request['filter'][$field->getDisplayName()];
+        return null;
+    }
+
+    /**
+     * @param mixed $request
+     * @param ResourceField $field
+     * @return bool
+     */
+    public function hasFilter($request, ResourceField $field)
+    {
+        if (!isset($request['filter']) || !is_array($request['filter'])) {
+            return false;
         }
 
-        return null;
+        return key_exists($field->getDisplayName(), $request['filter']);
     }
 
     /**
@@ -59,19 +69,6 @@ class JsonApiRequestResolver extends RequestResolver
         }
 
         return $parameter;
-    }
-
-    /**
-     * @param $request
-     * @param $key
-     * @return string|null
-     */
-    public function getParameter($request, $key)
-    {
-        if (isset($request[$key])) {
-            return $request[$key];
-        }
-        return null;
     }
 
     /**
