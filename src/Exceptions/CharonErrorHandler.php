@@ -15,13 +15,21 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
  */
 class CharonErrorHandler
 {
+    /**
+     *
+     */
+    const TITLE_RESOURCE_NOT_FOUND = 'Resource not found';
+
+    /**
+     * @var string
+     */
     protected $responseType = 'application/json';
 
     /**
      * Try to handle a Charon exception
      * @param $request
      * @param Exception $exception
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\JsonResponse|null
      */
     public function handleException($request, Exception $exception)
     {
@@ -29,28 +37,58 @@ class CharonErrorHandler
 
             case EntityNotFoundException::class:
             case ModelNotFoundException::class:
-                return $this->jsonResponse('Resource not found', $exception->getMessage(), 404);
+                return $this->jsonApiErrorResponse(
+                    self::TITLE_RESOURCE_NOT_FOUND,
+                    $exception->getMessage(),
+                    404
+                );
 
             case NoInputDataFound::class:
-                return $this->jsonResponse($exception->getMessage(), null, 400);
+                return $this->jsonApiErrorResponse(
+                    $exception->getMessage(),
+                    null,
+                    400
+                );
 
             case ValidationException::class:
-
                 $details = [];
 
-
-                return $this->jsonResponse($exception->getMessage(), null, 422);
-
-
+                return $this->jsonApiErrorResponse($exception->getMessage(), null, 422);
         }
+
+        return null;
     }
 
-    public function jsonResponse($message, $detail = null, $status = 500)
+    /**
+     * @param $message
+     * @param null $detail
+     * @param int $status
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function jsonApiErrorResponse($message, $detail = null, $status = 500)
     {
         return response()->json(['errors' => [
             'status' => $status,
-            'title' => $message,
-            'detail' => $detail
+            'title' => $this->processMessage($message),
+            'detail' => $detail !== null ? $this->processDetail($detail) : $detail
         ]], $status);
+    }
+
+    /**
+     * @param string $message
+     * @return string
+     */
+    protected function processMessage($message)
+    {
+        return $message;
+    }
+
+    /**
+     * @param string[] $detail
+     * @return string[]
+     */
+    protected function processDetail(array $detail)
+    {
+        return $detail;
     }
 }
