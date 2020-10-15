@@ -51,8 +51,6 @@ class CharonErrorHandler
                 );
 
             case ValidationException::class:
-                $details = [];
-
                 return $this->jsonApiErrorResponse($exception->getMessage(), null, 422);
         }
 
@@ -78,16 +76,16 @@ class CharonErrorHandler
      * @param string $message
      * @return string
      */
-    protected function processMessage($message)
+    protected function processMessage(string $message)
     {
         return $message;
     }
 
     /**
-     * @param string[] $detail
-     * @return string[]
+     * @param string $detail
+     * @return string
      */
-    protected function processDetail(array $detail)
+    protected function processDetail(string $detail)
     {
         return $detail;
     }
