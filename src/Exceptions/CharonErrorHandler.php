@@ -40,6 +40,7 @@ class CharonErrorHandler
                 return $this->jsonApiErrorResponse(
                     self::TITLE_RESOURCE_NOT_FOUND,
                     $exception->getMessage(),
+                    [],
                     404
                 );
 
@@ -47,11 +48,17 @@ class CharonErrorHandler
                 return $this->jsonApiErrorResponse(
                     $exception->getMessage(),
                     null,
+                    [],
                     400
                 );
 
             case ValidationException::class:
-                return $this->jsonApiErrorResponse($exception->getMessage(), null, 422);
+                return $this->jsonApiErrorResponse(
+                    $exception->getMessage(),
+                    null,
+                    [],
+                    422
+                );
         }
 
         return null;
@@ -59,16 +66,21 @@ class CharonErrorHandler
 
     /**
      * @param $message
-     * @param null $detail
+     * @param string $detailMessage
+     * @param array $detailParameters
      * @param int $status
      * @return \Illuminate\Http\JsonResponse
      */
-    public function jsonApiErrorResponse($message, $detail = null, $status = 500)
-    {
+    public function jsonApiErrorResponse(
+        string $message,
+        string $detailMessage = null,
+        array $detailParameters = [],
+        int $status = 500
+    ) {
         return response()->json(['errors' => [
             'status' => $status,
             'title' => $this->processMessage($message),
-            'detail' => $detail !== null ? $this->processDetail($detail) : $detail
+            'detail' => $detailMessage !== null ? $this->processDetail($detailMessage, $detailParameters) : $detailMessage
         ]], $status);
     }
 
@@ -83,9 +95,10 @@ class CharonErrorHandler
 
     /**
      * @param string $detail
+     * @param array $detailParameters
      * @return string
      */
-    protected function processDetail(string $detail)
+    protected function processDetail(string $detail, array $detailParameters)
     {
         return $detail;
     }
