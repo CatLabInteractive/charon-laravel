@@ -138,34 +138,39 @@ trait ResourceController
             $records = $this->getRecordLimit();
         }
 
+        $isQueryBuilder =
+            $queryBuilder instanceof Builder ||
+            $queryBuilder instanceof Relation;
+
         $factory = null;
+        $filterResults = null;
+
         if ($resourceDefinition) {
             $factory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($resourceDefinition);
 
-            $filterResults = $this->resourceTransformer->applyFilters(
-                $this->getRequest()->query(),
-                $resourceDefinition,
-                $context,
-                $queryBuilder
-            );
+            if ($isQueryBuilder) {
+                $filterResults = $this->resourceTransformer->applyFilters(
+                    $this->getRequest()->query(),
+                    $resourceDefinition,
+                    $context,
+                    $queryBuilder
+                );
 
-            $queryBuilder = $filterResults->getQueryBuilder();
-        } else {
-            $filterResults = null;
+                $queryBuilder = $filterResults->getQueryBuilder();
+            }
         }
 
         // apply global filters.
-        $this->applyGlobalFilters($queryBuilder, $factory ? $factory->getDefault() : null, $context);
+        if ($isQueryBuilder) {
+            $this->applyGlobalFilters($queryBuilder, $factory ? $factory->getDefault() : null, $context);
+        }
 
         // Process eager loading
         $this->resourceTransformer->processEagerLoading($queryBuilder, $resourceDefinition, $context);
 
         //$queryBuilder = $filters->getQueryBuilder();
 
-        if (
-            $queryBuilder instanceof Builder ||
-            $queryBuilder instanceof Relation
-        ) {
+        if ($isQueryBuilder) {
             $models = $queryBuilder->get();
         } else {
             $models = $queryBuilder;

@@ -224,6 +224,7 @@ trait JsonApiResourceController
         switch ($field->getCardinality()) {
             case Cardinality::ONE:
                 $context = $this->getContext(Action::VIEW);
+
                 $related = $resourceTransformer->getPropertyResolver()->resolveOneRelationship(
                     $resourceTransformer,
                     $entity,

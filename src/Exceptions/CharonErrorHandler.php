@@ -4,7 +4,9 @@
 namespace CatLab\Charon\Laravel\Exceptions;
 
 use CatLab\Charon\Exceptions\NoInputDataFound;
+use CatLab\Requirements\Exceptions\ResourceValidationException;
 use CatLab\Requirements\Exceptions\ValidationException;
+use CatLab\Requirements\Models\Message;
 use Exception;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -19,6 +21,7 @@ class CharonErrorHandler
      *
      */
     const TITLE_RESOURCE_NOT_FOUND = 'Resource not found';
+    const TITLE_RESOURCE_VALIDATION_FAILED = 'Resource validation failed';
 
     /**
      * @var string
@@ -33,10 +36,10 @@ class CharonErrorHandler
      */
     public function handleException($request, Exception $exception)
     {
-        switch (get_class($exception)) {
+        switch (true) {
 
-            case EntityNotFoundException::class:
-            case ModelNotFoundException::class:
+            case $exception instanceof EntityNotFoundException:
+            case $exception instanceof ModelNotFoundException:
                 return $this->jsonApiErrorResponse(
                     self::TITLE_RESOURCE_NOT_FOUND,
                     $exception->getMessage(),
@@ -44,7 +47,7 @@ class CharonErrorHandler
                     404
                 );
 
-            case NoInputDataFound::class:
+            case $exception instanceof NoInputDataFound:
                 return $this->jsonApiErrorResponse(
                     $exception->getMessage(),
                     null,
@@ -52,7 +55,10 @@ class CharonErrorHandler
                     400
                 );
 
-            case ValidationException::class:
+            case $exception instanceof ResourceValidationException:
+                return $this->getResourceValidationResponse($exception);
+
+            case $exception instanceof ValidationException:
                 return $this->jsonApiErrorResponse(
                     $exception->getMessage(),
                     null,
@@ -78,9 +84,13 @@ class CharonErrorHandler
         int $status = 500
     ) {
         return response()->json(['errors' => [
-            'status' => $status,
-            'title' => $this->processMessage($message),
-            'detail' => $detailMessage !== null ? $this->processDetail($detailMessage, $detailParameters) : $detailMessage
+            [
+                'status' => $status,
+                'title' => $this->processMessage($message),
+                'detail' => $detailMessage !== null
+                    ? $this->processDetail($detailMessage, $detailParameters)
+                    : $detailMessage
+            ]
         ]], $status);
     }
 
@@ -101,5 +111,43 @@ class CharonErrorHandler
     protected function processDetail(string $detail, array $detailParameters)
     {
         return $detail;
+    }
+
+    /**
+     * @param ResourceValidationException $exception
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function getResourceValidationResponse(ResourceValidationException $exception)
+    {
+        $errors = [];
+        foreach ($exception->getMessages() as $validationMessage) {
+            /** @var Message $validationMessage */
+
+            $property = $validationMessage->getPropertyName();
+            $source = [
+                'pointer' => '/data/' . $property
+            ];
+
+            $errors[] = [
+                'status' => 422,
+                'source' => $source,
+                'title' => self::TITLE_RESOURCE_VALIDATION_FAILED,
+                'detail' => $this->processDetail($validationMessage->getMessage(), [ $property ])
+            ];
+        }
+
+        return $this->toJsonApiResponse(['errors' => $errors ], 422);
+    }
+
+    /**
+     * @param $data
+     * @param $status
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function toJsonApiResponse($data, $status)
+    {
+        return response()->json($data, $status, [
+            'Content-Type' => $this->responseType
+        ]);
     }
 }
