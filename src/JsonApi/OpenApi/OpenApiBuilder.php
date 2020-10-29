@@ -2,12 +2,19 @@
 
 namespace CatLab\Charon\Laravel\JsonApi\OpenApi;
 
+use CatLab\Base\Helpers\ArrayHelper;
+use CatLab\Charon\Enums\Cardinality;
+use CatLab\Charon\Exceptions\SwaggerMultipleInputParsers;
 use CatLab\Charon\Factories\ResourceFactory;
+use CatLab\Charon\Interfaces\Context;
+use CatLab\Charon\Interfaces\DescriptionBuilder;
 use CatLab\Charon\Interfaces\ResourceDefinition as ResourceDefinitionInterface;
 use CatLab\Charon\Laravel\Exceptions\InvalidResourceDefinitionException;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResource;
 use CatLab\Charon\Laravel\JsonApi\Models\JsonApiResourceCollection;
 use CatLab\Charon\Laravel\JsonApi\Models\ResourceDefinition;
+use CatLab\Charon\Models\Routing\Route;
+use CatLab\Charon\OpenApi\OpenApiException;
 use CatLab\Charon\OpenApi\V2\OpenApiV2Builder;
 
 /**

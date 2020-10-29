@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 class JsonApiRequestResolver extends RequestResolver
 {
     const PAGE_PARAMETER = 'number';
+    const FILTER_PARAMETER = 'filter';
 
     /**
      * @param $request
@@ -22,12 +23,12 @@ class JsonApiRequestResolver extends RequestResolver
      */
     public function getFilter($request, ResourceField $field)
     {
-        if (!isset($request['filter']) || !is_array($request['filter'])) {
+        if (!isset($request[self::FILTER_PARAMETER]) || !is_array($request[self::FILTER_PARAMETER])) {
             return null;
         }
 
-        if (isset($request['filter'][$field->getDisplayName()])) {
-            return $request['filter'][$field->getDisplayName()];
+        if (isset($request[self::FILTER_PARAMETER][$field->getDisplayName()])) {
+            return $request[self::FILTER_PARAMETER][$field->getDisplayName()];
         }
 
         return null;
