@@ -7,6 +7,7 @@ use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Exceptions\ResourceException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
+use CatLab\Charon\Interfaces\ResourceDefinitionFactory;
 use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
@@ -186,8 +187,11 @@ trait CrudController
 
         $this->authorizeEdit($request, $entity);
 
+        // Fetch the entities resourcedefinition
+        $resourceDefinition = $this->resourceTransformer->getResourceDefinition($this->resourceDefinition, $entity);
+
         $writeContext = $this->getContext(Action::EDIT);
-        $inputResource = $this->bodyToResource($writeContext);
+        $inputResource = $this->bodyToResource($writeContext, $resourceDefinition);
 
         try {
             $inputResource->validate($writeContext, $entity);
