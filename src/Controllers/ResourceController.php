@@ -184,7 +184,7 @@ trait ResourceController
     }
 
     /**
-     * @param ResourceDefinitionContract $resourceDefinition
+     * @param ResourceDefinitionContract|string $resourceDefinition
      * @param ResourceTransformerContract $resourceTransformer
      * @return $this
      */
