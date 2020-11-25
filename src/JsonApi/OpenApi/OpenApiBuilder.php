@@ -21,7 +21,7 @@ use CatLab\Charon\OpenApi\V2\OpenApiV2Builder;
  * Class OpenAPIBuilder
  * @package CatLab\Charon\Laravel\JsonApi\OpenApi
  */
-class OpenAPIBuilder extends OpenApiV2Builder
+class OpenApiBuilder extends OpenApiV2Builder
 {
     /**
      * SwaggerBuilder constructor.
