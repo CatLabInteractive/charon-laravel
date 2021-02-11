@@ -31,6 +31,7 @@ use CatLab\Charon\Models\StaticResourceDefinitionFactory;
 use CatLab\Charon\Pagination\PaginationBuilder;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Response;
 
@@ -176,21 +177,38 @@ trait JsonApiResourceController
                     ->parameters()->path($resourceId)->string()->required()
                     ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
                     ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
+            }
+        }
 
-                $routes->delete($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@addToRelationship')
+        if ($field->canCreateNewChildren()) {
+
+            if ($field->getCardinality() === Cardinality::MANY) {
+                $routes->post($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@createRelationship')
                     ->summary(function () use ($field, $resourceDefinitionFactory) {
                         $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
 
                         $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
-                        return 'Remove a ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' from a ' . $entityName;
+                        return 'Create ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' to a ' . $entityName;
                     })
                     ->parameters()->path($resourceId)->string()->required()
                     ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
                     ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
             }
+
         }
 
-        // @todo we should probably also be able to create resources.
+        if ($field->canLinkExistingEntities() || $field->canCreateNewChildren()) {
+            $routes->delete($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@removeFromRelationship')
+                ->summary(function () use ($field, $resourceDefinitionFactory) {
+                    $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
+
+                    $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
+                    return 'Remove a ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' from a ' . $entityName;
+                })
+                ->parameters()->path($resourceId)->string()->required()
+                ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
+                ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
+        }
     }
 
     /**
@@ -313,9 +331,33 @@ trait JsonApiResourceController
         */
     }
 
+    /**
+     * @param $resourceId
+     * @param $relationshipDisplayName
+     * @return array|\string[][]
+     */
     public function addToRelationship($resourceId, $relationshipDisplayName)
     {
+        return $this->getErrorMessage('Method not implemented.');
+    }
 
+    /**
+     * @param $resourceId
+     * @param $relationshipDisplayName
+     * @return array|\string[][]
+     */
+    public function createRelationship($resourceId, $relationshipDisplayName)
+    {
+        return $this->getErrorMessage('Method not implemented.');
+    }
+
+    /**
+     * @param $resourceId
+     * @param $relationshipDisplayName
+     */
+    public function removeFromRelationship($resourceId, $relationshipDisplayName)
+    {
+        return $this->getErrorMessage('Method not implemented.');
     }
 
     /**
