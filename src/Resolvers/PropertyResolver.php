@@ -14,6 +14,7 @@ use CatLab\Charon\Models\Values\PropertyValue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -77,15 +78,30 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
                     return null;
                 }
 
-                if ($relation instanceof BelongsTo) {
+                if ($relation instanceof BelongsToMany) {
+                    // return all the things.
+                    $relation = $relation->get();
+                } else if ($relation instanceof BelongsTo) {
 
                     // Do we just want the identifier?
                     if ($context->getAction() === Action::IDENTIFIER) {
+
+                        // make it possible to use in older versions of laravel.
+                        if (method_exists($relation, 'getForeignKeyName')) {
+                            $foreignKeyName = $relation->getForeignKeyName();
+                            $ownerKeyName = $relation->getOwnerKeyName();
+                        } elseif (method_exists($relation, 'getForeignKey')) {
+                            $foreignKeyName = $relation->getForeignKey();
+                            $ownerKeyName = $relation->getOwnerKeyName();
+                        } else {
+                            throw new \Exception('Could not get foreign key from ' . get_class($relation));
+                        }
+
                         // Create a new 'related' instance and only fill in the identifier.
-                        $foreignId = $entity->getAttribute($relation->getForeignKey());
+                        $foreignId = $entity->getAttribute($foreignKeyName);
                         if ($foreignId) {
                             $instance =  $relation->getRelated()->newInstance();
-                            $instance->{$relation->getOwnerKey()} = $entity->getAttribute($relation->getForeignKey());
+                            $instance->{$ownerKeyName} = $entity->getAttribute($foreignKeyName);
 
                             return $instance;
                         } else {
