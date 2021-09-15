@@ -137,11 +137,19 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
 
         foreach ($identifiers->toArray() as $identifier) {
             /** @var PropertyValue $identifier */
-            $entities->where(
-                $transformer->getQueryAdapter()->getQualifiedName($identifier->getField()),
-                '=',
-                $identifier->getValue()
-            );
+            if ($entities instanceof \Illuminate\Support\Collection) {
+                $entities = $entities->where(
+                    $identifier->getField()->getName(),
+                    '=',
+                    $identifier->getValue()
+                );
+            } else {
+                $entities = $entities->where(
+                    $transformer->getQueryAdapter()->getQualifiedName($identifier->getField()),
+                    '=',
+                    $identifier->getValue()
+                );
+            }
         }
 
         return $entities->first();
