@@ -92,7 +92,7 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
                             $ownerKeyName = $relation->getOwnerKeyName();
                         } elseif (method_exists($relation, 'getForeignKey')) {
                             $foreignKeyName = $relation->getForeignKey();
-                            $ownerKeyName = $relation->getOwnerKeyName();
+                            $ownerKeyName = $relation->getOwnerKey();
                         } else {
                             throw new \Exception('Could not get foreign key from ' . get_class($relation));
                         }
