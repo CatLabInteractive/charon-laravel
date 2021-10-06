@@ -92,14 +92,16 @@ trait JsonApiResourceController
         }
 
         // add support for batch update
-        $childResource->patch($path, $controller . '@batchEdit')
-            ->summary(function () use ($resourceDefinitionObject) {
-                $entityName = $resourceDefinitionObject->getEntityName(true);
+        if (in_array('patch', $options['only'])) {
+            $childResource->patch($path, $controller . '@batchEdit')
+                ->summary(function () use ($resourceDefinitionObject) {
+                    $entityName = $resourceDefinitionObject->getEntityName(true);
 
-                return 'Batch update multiple ' . $entityName;
-            })
-            ->parameters()->resource($resourceDefinitionObject)->many()->required()
-            ->returns()->statusCode(200)->many($resourceDefinitionFactory->getDefault());
+                    return 'Batch update multiple ' . $entityName;
+                })
+                ->parameters()->resource($resourceDefinitionObject)->many()->required()
+                ->returns()->statusCode(200)->many($resourceDefinitionFactory->getDefault());
+        }
 
         return $childResource;
     }
