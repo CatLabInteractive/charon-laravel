@@ -193,12 +193,12 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
     {
         // is one related resource?
         if (ArrayHelper::isAssociative($relationshipContent['data'])) {
-            return $this->getRelatedIdentifier($relationshipContent['data']);
+            return $this->getRelatedObject($relationshipContent['data']);
         } else {
             // we have multiple related entities
             $out = [];
             foreach ($relationshipContent['data'] as $relatedResource) {
-                if ($related = $this->getRelatedIdentifier($relatedResource)) { // variable assignment in if stagement
+                if ($related = $this->getRelatedObject($relatedResource)) { // variable assignment in if stagement
                     $out[] = $related;
                 }
             }
@@ -207,18 +207,21 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
     }
 
     /**
-     * @param $relatedContent
+     * @param $relatedResource
      * @return array|null
      */
-    protected function getRelatedIdentifier($relatedContent)
+    protected function getRelatedObject($relatedResource)
     {
-        if (!isset($relatedContent['id'])) {
-            return null;
+        if (isset($relatedResource['attributes'])) {
+            if (isset($relatedResource['id'])) {
+                $relatedResource['attributes']['id'] = $relatedResource['id'];
+            }
+            return $relatedResource['attributes'];
+        } elseif (isset($relatedResource['id'])) {
+            return [ 'id' => $relatedResource['id']];
         }
 
-        return [
-            'id' => $relatedContent['id']
-        ];
+        return null;
     }
 
     /**

@@ -6,6 +6,7 @@ use CatLab\Base\Helpers\StringHelper;
 use CatLab\Charon\Laravel\Exceptions\PropertySetterException;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 /**
@@ -157,6 +158,8 @@ class Model extends \Illuminate\Database\Eloquent\Model
                     if ($relationship instanceof HasMany) {
                         $relationship->saveMany($children);
                     } else if ($relationship instanceof BelongsToMany) {
+                        $relationship->saveMany($children);
+                    } else if ($relationship instanceof MorphMany) {
                         $relationship->saveMany($children);
                     } else {
                         throw new PropertySetterException(

@@ -36,9 +36,18 @@ use Illuminate\Support\Collection;
  */
 class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
 {
-    const GETTER_PREFIX = 'get';
-    const GETTER_BOOLEAN_PREFIX = 'is';
-    const GETTER_IDENTIFIER_POSTFIX = 'Identifier';
+    /**
+     * @var ValueResolver
+     */
+    private $valueResolver;
+
+    /**
+     *
+     */
+    public function __construct()
+    {
+        $this->valueResolver = new ValueResolver();
+    }
 
     /**
      * @param $entity
@@ -46,86 +55,11 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
      * @param array $getterParameters
      * @param Context $context
      * @return mixed|null
+     * @throws \Exception
      */
     protected function getValueFromEntity($entity, $name, array $getterParameters, Context $context)
     {
-        /** @var Model $entity */
-
-        // Check if we only want the identifier
-        if ($context->getAction() === Action::IDENTIFIER && $this->methodExists($entity, self::GETTER_PREFIX.ucfirst($name).self::GETTER_IDENTIFIER_POSTFIX)) {
-            return call_user_func_array(array($entity, self::GETTER_PREFIX.ucfirst($name).self::GETTER_IDENTIFIER_POSTFIX), $getterParameters);
-        }
-
-        // Check for get method
-        if ($this->methodExists($entity, self::GETTER_PREFIX.ucfirst($name))) {
-            return call_user_func_array(array($entity, self::GETTER_PREFIX.ucfirst($name)), $getterParameters);
-        }
-
-        // Check for laravel "relationship" method
-        elseif ($this->methodExists($entity, $name)) {
-
-            if (
-                $entity instanceof Model &&
-                $entity->relationLoaded($name)
-            ) {
-                return $entity->$name;
-            } else {
-
-                $relation = call_user_func_array(array($entity, $name), $getterParameters);
-
-                // if this is a new entry, relation will always be null (and calling the relationship will destroy it)
-                if (!$entity->exists) {
-                    return null;
-                }
-
-                if ($relation instanceof BelongsToMany) {
-                    // return all the things.
-                    $relation = $relation->get();
-                } else if ($relation instanceof BelongsTo) {
-
-                    // Do we just want the identifier?
-                    if ($context->getAction() === Action::IDENTIFIER) {
-
-                        // make it possible to use in older versions of laravel.
-                        if (method_exists($relation, 'getForeignKeyName')) {
-                            $foreignKeyName = $relation->getForeignKeyName();
-                            $ownerKeyName = $relation->getOwnerKeyName();
-                        } elseif (method_exists($relation, 'getForeignKey')) {
-                            $foreignKeyName = $relation->getForeignKey();
-                            $ownerKeyName = $relation->getOwnerKeyName();
-                        } else {
-                            throw new \Exception('Could not get foreign key from ' . get_class($relation));
-                        }
-
-                        // Create a new 'related' instance and only fill in the identifier.
-                        $foreignId = $entity->getAttribute($foreignKeyName);
-                        if ($foreignId) {
-                            $instance =  $relation->getRelated()->newInstance();
-                            $instance->{$ownerKeyName} = $entity->getAttribute($foreignKeyName);
-
-                            return $instance;
-                        } else {
-                            return null;
-                        }
-                    }
-
-                    $relation = $relation->get()->first();
-                } elseif ($relation instanceof HasOne) {
-                    $relation = $relation->get()->first();
-                }
-
-                return $relation;
-            }
-        }
-
-        elseif ($this->methodExists($entity, self::GETTER_BOOLEAN_PREFIX.ucfirst($name))) {
-            return call_user_func_array(array($entity, self::GETTER_BOOLEAN_PREFIX.ucfirst($name)), $getterParameters);
-        }
-
-        else {
-            //throw new InvalidPropertyException;
-            return $entity->$name;
-        }
+        return $this->valueResolver->getValueFromEntity($entity, $name, $getterParameters, $context);
     }
 
     /**
@@ -153,11 +87,19 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
 
         foreach ($identifiers->toArray() as $identifier) {
             /** @var PropertyValue $identifier */
-            $entities->where(
-                $transformer->getQueryAdapter()->getQualifiedName($identifier->getField()),
-                '=',
-                $identifier->getValue()
-            );
+            if ($entities instanceof \Illuminate\Support\Collection) {
+                $entities = $entities->where(
+                    $identifier->getField()->getName(),
+                    '=',
+                    $identifier->getValue()
+                );
+            } else {
+                $entities = $entities->where(
+                    $transformer->getQueryAdapter()->getQualifiedName($identifier->getField()),
+                    '=',
+                    $identifier->getValue()
+                );
+            }
         }
 
         return $entities->first();

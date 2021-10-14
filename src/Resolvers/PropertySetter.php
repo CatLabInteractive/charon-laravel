@@ -21,6 +21,32 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
 {
     /**
+     * @var ValueResolver
+     */
+    private $valueResolver;
+
+    /**
+     *
+     */
+    public function __construct()
+    {
+        $this->valueResolver = new ValueResolver();
+    }
+
+    /**
+     * @param $entity
+     * @param $name
+     * @param array $getterParameters
+     * @param Context $context
+     * @return mixed|null
+     * @throws \Exception
+     */
+    protected function getValueFromEntity($entity, $name, array $getterParameters, Context $context)
+    {
+        return $this->valueResolver->getValueFromEntity($entity, $name, $getterParameters, $context);
+    }
+
+    /**
      * @param ResourceTransformer $entity
      * @param mixed $name
      * @param ResourceField $value
@@ -84,14 +110,16 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      */
     protected function addChildrenToEntity($entity, $name, array $childEntities, $setterParameters = [])
     {
-        if ($entity instanceof Model) {
+        if ($this->methodExists($entity, 'add'.ucfirst($name))) {
+
+            array_unshift($setterParameters, $childEntities);
+            return call_user_func_array(array($entity, 'add' . ucfirst($name)), $setterParameters);
+
+        } elseif ($entity instanceof Model) {
+
             $entity->addChildrenToEntity($name, $childEntities, $setterParameters);
             return;
-        }
 
-        if ($this->methodExists($entity, 'add'.ucfirst($name))) {
-            array_unshift($setterParameters, $childEntities);
-            return call_user_func_array(array($entity, 'add'.ucfirst($name)), $setterParameters);
         } else {
             foreach ($childEntities as $childEntity) {
                 $relationship = call_user_func([ $entity, $name ]);
@@ -144,6 +172,11 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
     ) {
         list ($entity, $name, $parameters) = $this->resolvePath($transformer, $entity, $field, $context);
         $existingChildren = $this->getValueFromEntity($entity, $name, $parameters, $context);
+
+        // Existing children null? In that case this could be a brand new entry and there are no children to remove.
+        if ($existingChildren === null) {
+            return;
+        }
 
         if ($existingChildren instanceof Relation) {
             $children = clone $existingChildren;
