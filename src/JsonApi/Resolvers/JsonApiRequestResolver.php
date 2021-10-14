@@ -2,6 +2,7 @@
 
 namespace CatLab\Charon\Laravel\JsonApi\Resolvers;
 
+use CatLab\Base\Enum\Operator;
 use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Models\Properties\ResourceField;
 use CatLab\Charon\Resolvers\RequestResolver;
@@ -19,9 +20,10 @@ class JsonApiRequestResolver extends RequestResolver
     /**
      * @param $request
      * @param ResourceField $field
+     * @param string $operator
      * @return string|null
      */
-    public function getFilter($request, ResourceField $field)
+    public function getFilter($request, ResourceField $field, $operator = Operator::EQ)
     {
         if (!isset($request[self::FILTER_PARAMETER]) || !is_array($request[self::FILTER_PARAMETER])) {
             return null;
@@ -37,9 +39,10 @@ class JsonApiRequestResolver extends RequestResolver
     /**
      * @param mixed $request
      * @param ResourceField $field
+     * @param string $operator
      * @return bool
      */
-    public function hasFilter($request, ResourceField $field)
+    public function hasFilter($request, ResourceField $field, $operator = Operator::EQ)
     {
         if (!isset($request['filter']) || !is_array($request['filter'])) {
             return false;

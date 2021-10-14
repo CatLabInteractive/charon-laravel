@@ -11,6 +11,7 @@ use CatLab\Charon\Interfaces\ResourceDefinitionFactory;
 use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
+use CatLab\Charon\Models\CurrentPath;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Laravel\Contracts\Response as ResponseContract;
 use CatLab\Requirements\Exceptions\RequirementValidationException;
@@ -233,7 +234,7 @@ trait CrudController
         $inputResource = $this->bodyToResource($writeContext);
 
         try {
-            $inputResource->validate($writeContext, $entity, '', false);
+            $inputResource->validate($writeContext, $entity, new CurrentPath(), false);
         } catch (ResourceValidationException $e) {
             return $this->getValidationErrorResponse($e);
         }

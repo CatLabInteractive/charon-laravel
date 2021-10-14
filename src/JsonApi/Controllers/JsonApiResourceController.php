@@ -26,6 +26,7 @@ use CatLab\Charon\Laravel\Resolvers\PropertySetter;
 use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
 use CatLab\Charon\Laravel\ResourceTransformer;
 use CatLab\Charon\Models\Context;
+use CatLab\Charon\Models\CurrentPath;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\StaticResourceDefinitionFactory;
 use CatLab\Charon\Pagination\PaginationBuilder;
@@ -148,7 +149,10 @@ trait JsonApiResourceController
         /*
          * Can we link existing items to this entity?
          */
-        if ($field->canLinkExistingEntities() && in_array('patch', $only)) {
+        if (
+            $field->canLinkExistingEntities(new Context(Action::EDIT)) &&
+            in_array('patch', $only)
+        ) {
 
             // Replace the relationship with a completely new list.
             $routes->patch($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@updateRelationship')
@@ -182,7 +186,7 @@ trait JsonApiResourceController
             }
         }
 
-        if ($field->canCreateNewChildren()) {
+        if ($field->canCreateNewChildren(new Context(Action::EDIT))) {
 
             if ($field->getCardinality() === Cardinality::MANY) {
                 $routes->post($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@createRelationship')
@@ -199,7 +203,10 @@ trait JsonApiResourceController
 
         }
 
-        if ($field->canLinkExistingEntities() || $field->canCreateNewChildren()) {
+        if (
+            $field->canLinkExistingEntities(new Context(Action::EDIT)) ||
+            $field->canCreateNewChildren(new Context(Action::EDIT))
+        ) {
             $routes->delete($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@removeFromRelationship')
                 ->summary(function () use ($field, $resourceDefinitionFactory) {
                     $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
