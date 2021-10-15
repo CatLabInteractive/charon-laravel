@@ -3,6 +3,7 @@
 
 namespace CatLab\Charon\Laravel\Exceptions;
 
+use CatLab\Charon\Exceptions\InputDecodeException;
 use CatLab\Charon\Exceptions\NoInputDataFound;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use CatLab\Requirements\Exceptions\ValidationException;
@@ -48,6 +49,7 @@ class CharonErrorHandler
                 );
 
             case $exception instanceof NoInputDataFound:
+            case $exception instanceof InputDecodeException:
                 return $this->jsonApiErrorResponse(
                     $exception->getMessage(),
                     null,
