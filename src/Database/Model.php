@@ -221,7 +221,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
      * @param array $childEntities
      * @param array $setterParameters
      */
-    private function addToChildArray($childArrayName, $relation, array $childEntities, $parameters = [])
+    private function addToChildArray($childArrayName, $relation, $childEntities, $parameters = [])
     {
         // For each relationship, keep a list of all children that were added.
         if (!isset($this->$childArrayName[$relation])) {
