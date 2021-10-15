@@ -3,6 +3,7 @@
 namespace CatLab\Charon\Laravel\Database;
 
 use CatLab\Base\Helpers\StringHelper;
+use CatLab\Charon\Laravel\Exceptions\ChildAlreadyAttachedException;
 use CatLab\Charon\Laravel\Exceptions\PropertySetterException;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -50,6 +51,17 @@ class Model extends \Illuminate\Database\Eloquent\Model
         $this->addToChildArray('addedChildren', $relation, $childEntities, $setterParameters);
 
         foreach ($childEntities as $child) {
+
+            $relationship = call_user_func([ $this, $relation ]);
+            if ($relationship instanceof HasMany) {
+                // Make sure the entry is not already attached to a different entity
+                $foreignKeyName = $relationship->getForeignKeyName();
+                $localKeyName = $relationship->getLocalKeyName();
+
+                if (!is_null($child->$foreignKeyName) && $child->$foreignKeyName != $this->$localKeyName) {
+                    throw ChildAlreadyAttachedException::make($this, $child, $relationship);
+                }
+            }
 
             // make sure it is also added to the local collection
             // (this automagically loads the relationships so this might cause db queries)
@@ -259,7 +271,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
             foreach ($this->$childArrayName as $relation => $childrenArrays) {
                 foreach ($childrenArrays as $childrenArray) {
                     $parameters = $childrenArray['parameters'];
-                    $children = $childrenArrays['children'];
+                    $children = $childrenArray['children'];
 
                     $callback($relation, $children, $parameters);
                 }
