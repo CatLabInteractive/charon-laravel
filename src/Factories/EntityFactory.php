@@ -32,6 +32,10 @@ class EntityFactory implements \CatLab\Charon\Interfaces\EntityFactory
      */
     public function resolveLinkedEntity($parent, string $entityClassName, array $identifiers, Context $context)
     {
+        if (count($identifiers) === 0) {
+            return null;
+        }
+
         if (isset($identifiers['id'])) {
             return $entityClassName::find($identifiers['id']);
         }
