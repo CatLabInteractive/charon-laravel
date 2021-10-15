@@ -3,6 +3,7 @@
 namespace CatLab\Charon\Laravel\Database;
 
 use CatLab\Base\Helpers\StringHelper;
+use CatLab\Charon\Laravel\Exceptions\ChildAlreadyAttachedException;
 use CatLab\Charon\Laravel\Exceptions\PropertySetterException;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,17 +17,17 @@ use Illuminate\Support\Str;
 class Model extends \Illuminate\Database\Eloquent\Model
 {
     /**
-     * @var Model[][]
+     * @var mixed
      */
     private $addedChildren;
 
     /**
-     * @var Model[][]
+     * @var mixed
      */
     private $removedChildren;
 
     /**
-     * @var Model[][]
+     * @var mixed
      */
     private $editedChildren;
 
@@ -47,13 +48,20 @@ class Model extends \Illuminate\Database\Eloquent\Model
      */
     public function addChildrenToEntity($relation, array $childEntities, $setterParameters = [])
     {
-        // For each relationship, keep a list of all children that were added.
-        if (!isset($this->addedChildren[$relation])) {
-            $this->addedChildren[$relation] = [];
-        }
+        $this->addToChildArray('addedChildren', $relation, $childEntities, $setterParameters);
 
         foreach ($childEntities as $child) {
-            $this->addedChildren[$relation][] = $child;
+
+            $relationship = call_user_func([ $this, $relation ]);
+            if ($relationship instanceof HasMany) {
+                // Make sure the entry is not already attached to a different entity
+                $foreignKeyName = $relationship->getForeignKeyName();
+                $localKeyName = $relationship->getLocalKeyName();
+
+                if (!is_null($child->$foreignKeyName) && $child->$foreignKeyName != $this->$localKeyName) {
+                    throw ChildAlreadyAttachedException::make($this, $child, $relationship);
+                }
+            }
 
             // make sure it is also added to the local collection
             // (this automagically loads the relationships so this might cause db queries)
@@ -68,14 +76,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
      */
     public function editChildrenInEntity($relation, $childEntities, $parameters)
     {
-        // For each relationship, keep a list of all children that were added.
-        if (!isset($this->editedChildren[$relation])) {
-            $this->editedChildren[$relation] = [];
-        }
-
-        foreach ($childEntities as $childEntity) {
-            $this->editedChildren[$relation][] = $childEntity;
-        }
+        $this->addToChildArray('editedChildren', $relation, $childEntities, $parameters);
     }
 
     /**
@@ -85,14 +86,9 @@ class Model extends \Illuminate\Database\Eloquent\Model
      */
     public function removeChildrenFromEntity($relation, $childEntities, $parameters)
     {
-        // For each relationship, keep a list of all children that were added.
-        if (!isset($this->removedChildren[$relation])) {
-            $this->removedChildren[$relation] = [];
-        }
+        $this->addToChildArray('removedChildren', $relation, $childEntities, $parameters);
 
         foreach ($childEntities as $child) {
-            $this->removedChildren[$relation][] = $child;
-
             if ($this->relationLoaded($relation)) {
                 $this->setRelation($relation, $this->getRelation($relation)->filter(function($value, $key) use ($child) {
                     return $value->id !== $child->id;
@@ -107,10 +103,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
      */
     public function getAddedChildren($relation)
     {
-        if (isset($this->addedChildren[$relation])) {
-            return $this->addedChildren[$relation];
-        }
-        return [];
+        return $this->getChildrenFromChildArray('addedChildren', $relation);
     }
 
     /**
@@ -119,10 +112,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
      */
     public function getRemovedChildren($relation)
     {
-        if (isset($this->removedChildren[$relation])) {
-            return $this->removedChildren[$relation];
-        }
-        return [];
+        return $this->getChildrenFromChildArray('removedChildren', $relation);
     }
 
     /**
@@ -131,10 +121,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
      */
     public function getEditedChildren($relation)
     {
-        if (isset($this->editedChildren[$relation])) {
-            return $this->editedChildren[$relation];
-        }
-        return [];
+        return $this->getChildrenFromChildArray('editedChildren', $relation);
     }
 
     /**
@@ -146,13 +133,14 @@ class Model extends \Illuminate\Database\Eloquent\Model
     {
         $toReload = [];
 
-        if (isset($this->addedChildren)) {
-            foreach ($this->addedChildren as $relation => $children) {
+        $this->forEachChildrenFromChildArray(
+            'addedChildren',
+            function($relation, $children, $parameters) use (&$toReload) {
 
                 // Look for magic method
                 $magicMethod = 'saveMany' . Str::ucfirst($relation);
                 if (method_exists($this, $magicMethod)) {
-                    call_user_func([ $this, $magicMethod], $children);
+                    call_user_func([ $this, $magicMethod ], $children, $parameters);
                 } else {
                     $relationship = call_user_func([$this, $relation]);
                     if ($relationship instanceof HasMany) {
@@ -177,10 +165,11 @@ class Model extends \Illuminate\Database\Eloquent\Model
 
                 $toReload[$relation] = true;
             }
-        }
+        );
 
-        if (isset($this->removedChildren)) {
-            foreach ($this->removedChildren as $relation => $children) {
+        $this->forEachChildrenFromChildArray(
+            'removedChildren',
+            function($relation, $children, $parameters) use (&$toReload) {
 
                 $relationship = call_user_func([$this, $relation]);
 
@@ -202,12 +191,12 @@ class Model extends \Illuminate\Database\Eloquent\Model
 
                 $toReload[$relation] = true;
             }
-        }
+        );
 
-        if (isset($this->editedChildren)) {
-            foreach ($this->editedChildren as $relation => $children) {
-                $relationship = call_user_func([ $this, $relation ]);
 
+        $this->forEachChildrenFromChildArray(
+            'editedChildren',
+            function($relation, $children, $parameters) use (&$toReload) {
                 foreach ($children as $child) {
                     if ($child instanceof Model) {
                         $child->saveRecursively();
@@ -218,11 +207,75 @@ class Model extends \Illuminate\Database\Eloquent\Model
 
                 $toReload[$relation] = true;
             }
-        }
+        );
 
         $toReload = array_keys($toReload);
         foreach ($toReload as $reload) {
             unset($this->relations[$reload]);
+        }
+    }
+
+    /**
+     * @param $childArrayName
+     * @param $relation
+     * @param array $childEntities
+     * @param array $setterParameters
+     */
+    private function addToChildArray($childArrayName, $relation, array $childEntities, $parameters = [])
+    {
+        // For each relationship, keep a list of all children that were added.
+        if (!isset($this->$childArrayName[$relation])) {
+            $this->$childArrayName[$relation] = [];
+        }
+
+        foreach ($this->$childArrayName[$relation] as &$relationshipArray) {
+            if ($relationshipArray['parameters'] === $parameters) {
+                $relationshipArray['children'] = array_merge($relationshipArray['children'], $childEntities);
+                return;
+            }
+        }
+
+        $this->$childArrayName[$relation][] = [
+            'parameters' => $parameters,
+            'children' => $childEntities
+        ];
+    }
+
+    /**
+     * @param $childArrayName
+     * @param $relation
+     * @return array
+     */
+    private function getChildrenFromChildArray($childArrayName, $relation)
+    {
+        if (isset($this->$childArrayName[$relation])) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($this->$childArrayName[$relation] as $relationshipArray) {
+            $out = array_merge($out, $relationshipArray['children']);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Call $callback for each list of children (and any parameters that might have been defined)
+     * @param $childArrayName
+     * @param callable $callback
+     */
+    private function forEachChildrenFromChildArray($childArrayName, callable $callback)
+    {
+        if (isset($this->$childArrayName)) {
+            foreach ($this->$childArrayName as $relation => $childrenArrays) {
+                foreach ($childrenArrays as $childrenArray) {
+                    $parameters = $childrenArray['parameters'];
+                    $children = $childrenArray['children'];
+
+                    $callback($relation, $children, $parameters);
+                }
+            }
         }
     }
 }

@@ -15,7 +15,9 @@ use Illuminate\Support\Str;
 class JsonApiRequestResolver extends RequestResolver
 {
     const PAGE_PARAMETER = 'number';
+
     const FILTER_PARAMETER = 'filter';
+    const SEARCH_PARAMETER = 'search';
 
     /**
      * @param $request
@@ -25,12 +27,14 @@ class JsonApiRequestResolver extends RequestResolver
      */
     public function getFilter($request, ResourceField $field, $operator = Operator::EQ)
     {
-        if (!isset($request[self::FILTER_PARAMETER]) || !is_array($request[self::FILTER_PARAMETER])) {
+        $filterName = $this->determineFilterParameterNameFromOperator($operator);
+
+        if (!isset($request[$filterName]) || !is_array($request[$filterName])) {
             return null;
         }
 
-        if (isset($request[self::FILTER_PARAMETER][$field->getDisplayName()])) {
-            return $request[self::FILTER_PARAMETER][$field->getDisplayName()];
+        if (isset($request[$filterName][$field->getDisplayName()])) {
+            return $request[$filterName][$field->getDisplayName()];
         }
 
         return null;
@@ -44,11 +48,13 @@ class JsonApiRequestResolver extends RequestResolver
      */
     public function hasFilter($request, ResourceField $field, $operator = Operator::EQ)
     {
-        if (!isset($request['filter']) || !is_array($request['filter'])) {
+        $filterName = $this->determineFilterParameterNameFromOperator($operator);
+
+        if (!isset($request[$filterName]) || !is_array($request[$filterName])) {
             return false;
         }
 
-        return key_exists($field->getDisplayName(), $request['filter']);
+        return key_exists($field->getDisplayName(), $request[$filterName]);
     }
 
     /**
@@ -100,6 +106,21 @@ class JsonApiRequestResolver extends RequestResolver
     public function getAfterCursor($request)
     {
         return $this->getPageParameter($request, self::CURSOR_AFTER_PARAMETER);
+    }
+
+    /**
+     * @param $operator
+     * @return string
+     */
+    protected function determineFilterParameterNameFromOperator($operator)
+    {
+        switch ($operator) {
+            case Operator::SEARCH:
+                return self::SEARCH_PARAMETER;
+
+            default:
+                return self::FILTER_PARAMETER;
+        }
     }
 
     /**

@@ -6,10 +6,10 @@ use CatLab\Base\Helpers\ArrayHelper;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Factories\ResourceFactory;
+use CatLab\Charon\Laravel\Factories\AuthorizedEntityFactory;
 use CatLab\Charon\Laravel\Factories\EntityFactory;
 use CatLab\Charon\Laravel\Models\ModelFilterResults;
 use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
-use CatLab\Charon\Models\FilterResults;
 use CatLab\Charon\Models\ResourceDefinition;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Laravel\InputParsers\JsonBodyInputParser;
@@ -282,7 +282,7 @@ trait ResourceController
         $resourceDefinition = null,
         $entityFactory = null
     ) {
-        $entityFactory = $entityFactory ?? new EntityFactory();
+        $entityFactory = $entityFactory ?? $this->createEntityFactory();
 
         return $this->resourceTransformer->toEntity(
             $resource,
@@ -338,7 +338,7 @@ trait ResourceController
         return $this->resourceTransformer->entitiesFromIdentifiers(
             $resourceDefinition,
             $identifiers,
-            new EntityFactory(),
+            $this->createEntityFactory(),
             $context
         );
     }
@@ -592,5 +592,13 @@ trait ResourceController
             new QueryAdapter(),
             new ResourceFactory()
         );
+    }
+
+    /**
+     * @return \CatLab\Charon\Interfaces\EntityFactory
+     */
+    protected function createEntityFactory()
+    {
+        return new EntityFactory();
     }
 }

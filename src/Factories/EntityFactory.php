@@ -33,7 +33,13 @@ class EntityFactory implements \CatLab\Charon\Interfaces\EntityFactory
     public function resolveLinkedEntity($parent, string $entityClassName, array $identifiers, Context $context)
     {
         if (isset($identifiers['id'])) {
-            return $entityClassName::find($identifiers['id']);
+            return $this->getAuthorizedResolvedEntity(
+                $entityClassName::find($identifiers['id'])
+            );
+        }
+
+        if (count($identifiers) === 0) {
+            return null;
         }
 
         $query = $entityClassName::query();
@@ -41,7 +47,9 @@ class EntityFactory implements \CatLab\Charon\Interfaces\EntityFactory
             $query->where($k, '=', $v);
         }
 
-        return $query->first();
+        return $this->getAuthorizedResolvedEntity(
+            $query->first()
+        );
     }
 
     /**
@@ -55,7 +63,13 @@ class EntityFactory implements \CatLab\Charon\Interfaces\EntityFactory
     {
         $data = $identifier->toArray();
         if (isset($data['id'])) {
-            return $entityClassName::find($data['id']);
+            return $this->getAuthorizedResolvedEntity(
+                $entityClassName::find($data['id'])
+            );
+        }
+
+        if (count($data) === 0) {
+            return null;
         }
 
         $query = $entityClassName::query();
@@ -63,6 +77,18 @@ class EntityFactory implements \CatLab\Charon\Interfaces\EntityFactory
             $query->where($k, '=', $v);
         }
 
-        return $query->first();
+        return $this->getAuthorizedResolvedEntity(
+            $query->first()
+        );
+    }
+
+    /**
+     * @param $entity
+     * @return mixed
+     */
+    protected function getAuthorizedResolvedEntity($entity)
+    {
+        // By default, no authorization is done.
+        return $entity;
     }
 }

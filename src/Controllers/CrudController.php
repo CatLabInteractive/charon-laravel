@@ -138,7 +138,6 @@ trait CrudController
         }
 
         $createdResources = new ResourceCollection();
-
         $readContext = $this->getContext(Action::VIEW);
 
         // now save all resources

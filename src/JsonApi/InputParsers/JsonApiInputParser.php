@@ -56,6 +56,7 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
      * @param Context $context
      * @param null $resource
      * @return IdentifierCollection|null
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     public function getIdentifiers(
         ResourceTransformer $resourceTransformer,
@@ -142,37 +143,7 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
 
         foreach ($resources as $resourceData) {
 
-            $modelInput = [];
-            if (isset($resourceData['attributes'])) {
-                $modelInput = $resourceData['attributes'];
-            }
-
-            if (isset($resourceData['id'])) {
-                $modelInput['id'] = $resourceData['id'];
-            }
-
-            if (isset($resourceData['type'])) {
-                $modelInput['type'] = $resourceData['type'];
-            }
-
-            // our system handles relationships in the same way as attributes, so...
-            if (isset($resourceData['relationships'])) {
-                foreach ($resourceData['relationships'] as $relationshipName => $relationshipContent) {
-                    if (
-                        !is_array($relationshipContent) ||
-                        !array_key_exists('data', $relationshipContent)
-                    ) {
-                        continue;
-                    }
-
-                    // is null?
-                    if (!isset($relationshipContent['data'])) {
-                        $modelInput[$relationshipName] = null;
-                    } elseif ($related = $this->getRelationshipContent($relationshipContent)) { // variable assignment in if stagement
-                        $modelInput[$relationshipName] = $related;
-                    }
-                }
-            }
+            $modelInput = $this->getResourceInput($resourceData);
 
             $resource = $resourceTransformer->fromArray(
                 $resourceDefinition,
@@ -183,6 +154,48 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
         }
 
         return $resourceCollection;
+    }
+
+    /**
+     * Given input for a single resource (and it's possible nested children), return an array that is parseable
+     * by the resource transformer fromArray method (ie, translate JSON-API to regular (nested) json.
+     * @param $resourceData
+     */
+    protected function getResourceInput($resourceData)
+    {
+        $modelInput = [];
+        if (isset($resourceData['attributes'])) {
+            $modelInput = $resourceData['attributes'];
+        }
+
+        if (isset($resourceData['id'])) {
+            $modelInput['id'] = $resourceData['id'];
+        }
+
+        if (isset($resourceData['type'])) {
+            $modelInput['type'] = $resourceData['type'];
+        }
+
+        // our system handles relationships in the same way as attributes, so...
+        if (isset($resourceData['relationships'])) {
+            foreach ($resourceData['relationships'] as $relationshipName => $relationshipContent) {
+                if (
+                    !is_array($relationshipContent) ||
+                    !array_key_exists('data', $relationshipContent)
+                ) {
+                    continue;
+                }
+
+                // is null?
+                if (!isset($relationshipContent['data'])) {
+                    $modelInput[$relationshipName] = null;
+                } elseif ($related = $this->getRelationshipContent($relationshipContent)) { // variable assignment in if stagement
+                    $modelInput[$relationshipName] = $related;
+                }
+            }
+        }
+
+        return $modelInput;
     }
 
     /**
@@ -216,7 +229,8 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
             if (isset($relatedResource['id'])) {
                 $relatedResource['attributes']['id'] = $relatedResource['id'];
             }
-            return $relatedResource['attributes'];
+
+            return $this->getResourceInput($relatedResource);
         } elseif (isset($relatedResource['id'])) {
             return [ 'id' => $relatedResource['id']];
         }
@@ -278,6 +292,7 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
      * @param Route $route
      * @param ResourceParameter $parameter
      * @param ResourceDefinition $resourceDefinition
+     * @param $action
      * @param null $resource
      * @return ParameterCollection
      */
