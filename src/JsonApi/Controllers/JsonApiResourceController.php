@@ -146,10 +146,27 @@ trait JsonApiResourceController
                 ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
         }
 
+        if ($field->canCreateNewChildren(new Context(Action::EDIT))) {
+
+            if ($field->getCardinality() === Cardinality::MANY) {
+                $routes->post($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@createRelationship')
+                    ->summary(function () use ($field, $resourceDefinitionFactory) {
+                        $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
+
+                        $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
+                        return 'Create ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' to a ' . $entityName;
+                    })
+                    ->parameters()->path($resourceId)->string()->required()
+                    ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
+                    ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
+            }
+
+        }
+
         /*
          * Can we link existing items to this entity?
          */
-        if (
+        elseif (
             $field->canLinkExistingEntities(new Context(Action::EDIT)) &&
             in_array('patch', $only)
         ) {
@@ -184,23 +201,6 @@ trait JsonApiResourceController
                     ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
                     ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
             }
-        }
-
-        if ($field->canCreateNewChildren(new Context(Action::EDIT))) {
-
-            if ($field->getCardinality() === Cardinality::MANY) {
-                $routes->post($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@createRelationship')
-                    ->summary(function () use ($field, $resourceDefinitionFactory) {
-                        $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
-
-                        $relatedEntityName = $field->getChildResourceDefinition()->getEntityName(true);
-                        return 'Create ' . $field->getDisplayName() . ' ' . $relatedEntityName . ' to a ' . $entityName;
-                    })
-                    ->parameters()->path($resourceId)->string()->required()
-                    ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
-                    ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
-            }
-
         }
 
         if (
