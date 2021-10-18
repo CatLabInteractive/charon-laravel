@@ -32,7 +32,9 @@ class AuthorizedEntityFactory extends EntityFactory
      */
     protected function getAuthorizedResolvedEntity($entity)
     {
-        app(Gate::class)->authorize($this->authorizationMethod, $entity);
+        if ($entity) {
+            app(Gate::class)->authorize($this->authorizationMethod, $entity);
+        }
 
         // By default, no authorization is done.
         return $entity;
