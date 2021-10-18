@@ -36,7 +36,6 @@ class AuthorizedEntityFactory extends EntityFactory
             app(Gate::class)->authorize($this->authorizationMethod, $entity);
         }
 
-        // By default, no authorization is done.
         return $entity;
     }
 }
