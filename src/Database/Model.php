@@ -248,7 +248,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
      */
     private function getChildrenFromChildArray($childArrayName, $relation)
     {
-        if (isset($this->$childArrayName[$relation])) {
+        if (!isset($this->$childArrayName[$relation])) {
             return [];
         }
 
