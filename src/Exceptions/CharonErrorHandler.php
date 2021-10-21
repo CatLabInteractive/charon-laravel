@@ -8,6 +8,7 @@ use CatLab\Charon\Exceptions\NoInputDataFound;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use CatLab\Requirements\Exceptions\ValidationException;
 use CatLab\Requirements\Models\Message;
+use CatLab\Requirements\Models\TranslatableMessage;
 use Exception;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -106,13 +107,13 @@ class CharonErrorHandler
     }
 
     /**
-     * @param string $detail
+     * @param Message|string $detail
      * @param array $detailParameters
      * @return string
      */
-    protected function processDetail(string $detail, array $detailParameters)
+    protected function processDetail($detail, array $detailParameters)
     {
-        return $detail;
+        return strval($detail);
     }
 
     /**
@@ -130,12 +131,19 @@ class CharonErrorHandler
                 'pointer' => '/data/' . $property
             ];
 
-            $errors[] = [
+            $error = [
                 'status' => 422,
                 'source' => $source,
                 'title' => self::TITLE_RESOURCE_VALIDATION_FAILED,
-                'detail' => $this->processDetail($validationMessage->getMessage(), [ $property ])
+                'detail' => $this->processDetail($validationMessage, [ $property ])
             ];
+
+            if ($validationMessage instanceof TranslatableMessage) {
+                $error['message_template'] = $validationMessage->getTemplate();
+                $error['message_values'] = $validationMessage->getValues();
+            }
+
+            $errors[] = $error;
         }
 
         return $this->toJsonApiResponse(['errors' => $errors ], 422);

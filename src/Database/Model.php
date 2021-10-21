@@ -53,7 +53,10 @@ class Model extends \Illuminate\Database\Eloquent\Model
         foreach ($childEntities as $child) {
 
             $relationship = call_user_func([ $this, $relation ]);
-            if ($relationship instanceof HasMany) {
+            if (
+                $relationship instanceof HasMany ||
+                $relationship instanceof MorphMany
+            ) {
                 // Make sure the entry is not already attached to a different entity
                 $foreignKeyName = $relationship->getForeignKeyName();
                 $localKeyName = $relationship->getLocalKeyName();
