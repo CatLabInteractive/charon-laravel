@@ -101,9 +101,13 @@ class ValueResolver
             return call_user_func_array(array($entity, self::GETTER_BOOLEAN_PREFIX.ucfirst($name)), $getterParameters);
         }
 
-        else {
+        elseif (is_object($entity)) {
             //throw new InvalidPropertyException;
             return $entity->$name;
+        }
+
+        elseif (is_array($entity) && isset($entity[$name])) {
+            return $entity[$name];
         }
     }
 
