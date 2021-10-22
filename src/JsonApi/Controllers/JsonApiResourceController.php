@@ -237,7 +237,7 @@ trait JsonApiResourceController
 
         $entity = $this->findEntity($request);
         if (!$entity) {
-            throw new EntityNotFoundException('Could not find entity with id ' . $entity->id);
+            throw EntityNotFoundException::makeTranslatable('Could not find entity with id %s', [ $entity->id ]);
         }
 
         $field = $this->getResourceDefinition()->getFields()->getFromDisplayName($relationshipDisplayName);
@@ -314,7 +314,7 @@ trait JsonApiResourceController
 
         $entity = $this->findEntity($request);
         if (!$entity) {
-            throw new EntityNotFoundException('Could not find entity with id ' . $entity->id);
+            throw EntityNotFoundException::makeTranslatable('Could not find entity with id %s.', [ $entity->id ]);
         }
 
         $this->authorizeEdit($request, $entity);

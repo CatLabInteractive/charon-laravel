@@ -23,7 +23,7 @@ trait ChildCrudController
     public function __construct()
     {
         if (!defined('static::RESOURCE_DEFINITION')) {
-            throw new ResourceException("All classes using CrudController must define a constant called RESOURCE_DEFINITION");
+            throw ResourceException::makeTranslatable('All classes using CrudController must define a constant called RESOURCE_DEFINITION.');
         }
 
         parent::__construct(static::RESOURCE_DEFINITION);

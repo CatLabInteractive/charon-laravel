@@ -153,8 +153,11 @@ class Model extends \Illuminate\Database\Eloquent\Model
                     } else if ($relationship instanceof MorphMany) {
                         $relationship->saveMany($children);
                     } else {
-                        throw new PropertySetterException(
-                            "Relationship " . get_class($relationship) . " is not implemented yet."
+                        throw PropertySetterException::makeTranslatable(
+                            'Relationship %s is not implemented yet.',
+                            [
+                                get_class($relationship)
+                            ]
                         );
                     }
                 }
@@ -187,8 +190,11 @@ class Model extends \Illuminate\Database\Eloquent\Model
                         $child->delete();
                     }
                 } else {
-                    throw new PropertySetterException(
-                        "Relationship " . get_class($relationship) . " is not implemented yet."
+                    throw PropertySetterException::makeTranslatable(
+                        'Relationship %s is not implemented yet.',
+                        [
+                            get_class($relationship)
+                        ]
                     );
                 }
 

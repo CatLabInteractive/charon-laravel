@@ -127,8 +127,13 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
                 if ($relationship instanceof BelongsToMany) {
                     $relationship->attach($childEntity);
                 } else {
-                    throw new PropertySetterException("Relationship of type " . get_class($relationship) . " is not " .
-                        "supported yet. Use " . Model::class . " instead.");
+                    throw PropertySetterException::makeTranslatable(
+                        'Relationship of type %s is not supported yet. Use %s instead.',
+                        [
+                            get_class($relationship),
+                            Model::class
+                        ]
+                    );
                 }
             }
         }
@@ -251,8 +256,10 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
                     }*/
                 }
             } else {
-                throw new PropertySetterException("Relationship of type " . get_class($relationship) . " is not " .
-                    "supported yet. Use " . Model::class . " instead.");
+                throw PropertySetterException::makeTranslatable('Relationship of type %s is not supported yet. Use %s instead.', [
+                    get_class($relationship),
+                    Model::class
+                ]);
             }
         }
     }

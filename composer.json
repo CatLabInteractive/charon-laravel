@@ -15,7 +15,7 @@
         }
     },
     "require": {
-        "catlabinteractive/charon": "^1.4.9"
+        "catlabinteractive/charon": "^1.4.11"
     },
     "require-dev": {
         "laravel/framework": "^5.8.0",

@@ -22,8 +22,8 @@ class CharonErrorHandler
     /**
      *
      */
-    const TITLE_RESOURCE_NOT_FOUND = 'Resource not found';
-    const TITLE_RESOURCE_VALIDATION_FAILED = 'Resource validation failed';
+    const TITLE_RESOURCE_NOT_FOUND = 'Resource not found.';
+    const TITLE_RESOURCE_VALIDATION_FAILED = 'Resource validation failed.';
 
     /**
      * @var string
@@ -44,7 +44,7 @@ class CharonErrorHandler
             case $exception instanceof ModelNotFoundException:
                 return $this->jsonApiErrorResponse(
                     self::TITLE_RESOURCE_NOT_FOUND,
-                    $exception->getMessage(),
+                    $exception->getErrorMessage(),
                     [],
                     404
                 );
@@ -52,7 +52,7 @@ class CharonErrorHandler
             case $exception instanceof NoInputDataFound:
             case $exception instanceof InputDecodeException:
                 return $this->jsonApiErrorResponse(
-                    $exception->getMessage(),
+                    $exception->getErrorMessage(),
                     null,
                     [],
                     400
@@ -63,7 +63,7 @@ class CharonErrorHandler
 
             case $exception instanceof ValidationException:
                 return $this->jsonApiErrorResponse(
-                    $exception->getMessage(),
+                    $exception->getErrorMessage(),
                     null,
                     [],
                     422
@@ -101,9 +101,9 @@ class CharonErrorHandler
      * @param string $message
      * @return string
      */
-    protected function processMessage(string $message)
+    protected function processMessage($message)
     {
-        return $message;
+        return strval($message);
     }
 
     /**
@@ -134,7 +134,7 @@ class CharonErrorHandler
             $error = [
                 'status' => 422,
                 'source' => $source,
-                'title' => self::TITLE_RESOURCE_VALIDATION_FAILED,
+                'title' => $this->processMessage(self::TITLE_RESOURCE_VALIDATION_FAILED),
                 'detail' => $this->processDetail($validationMessage, [ $property ])
             ];
 

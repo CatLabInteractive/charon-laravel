@@ -69,7 +69,7 @@ trait CrudController
     public function __construct()
     {
         if (!defined('static::RESOURCE_DEFINITION')) {
-            throw new ResourceException("All classes using CrudController must define a constant called RESOURCE_DEFINITION. " . get_class($this) . ' does not have this constant.');
+            throw ResourceException::makeTranslatable('All classes using CrudController must define a constant called RESOURCE_DEFINITION. %s does not have this constant.', [ get_class($this) ]);
         }
 
         parent::__construct(static::RESOURCE_DEFINITION);
@@ -182,7 +182,7 @@ trait CrudController
 
         $entity = $this->findEntity($request);
         if (!$entity) {
-            throw new EntityNotFoundException('Could not find entity with id ' . $entity->id);
+            throw EntityNotFoundException::makeTranslatable('Could not find entity with id %s.', [ $entity->id ]);
         }
 
         $this->authorizeEdit($request, $entity);
@@ -224,7 +224,7 @@ trait CrudController
 
         $entity = $this->findEntity($request);
         if (!$entity) {
-            throw new EntityNotFoundException('Could not find entity with id ' . $entity->id);
+            throw EntityNotFoundException::makeTranslatable('Could not find entity with id %s.', [ $entity->id ]);
         }
 
         $this->authorizeEdit($request, $entity);

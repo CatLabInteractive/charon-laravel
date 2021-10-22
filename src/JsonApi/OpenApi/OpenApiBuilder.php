@@ -46,7 +46,13 @@ class OpenApiBuilder extends OpenApiV2Builder
     protected function checkResourceDefinitionType(ResourceDefinitionInterface $resourceDefinition)
     {
         if (! $resourceDefinition instanceof ResourceDefinition) {
-            throw new InvalidResourceDefinitionException(self::class . ' requires ' . ResourceDefinition::class . ' resource definitions');
+            throw InvalidResourceDefinitionException::makeTranslatable(
+                '%s requires %s resource definitions.',
+                [
+                    self::class,
+                    ResourceDefinition::class
+                ]
+            );
         }
     }
 
