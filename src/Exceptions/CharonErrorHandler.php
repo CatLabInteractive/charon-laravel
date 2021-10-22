@@ -41,10 +41,17 @@ class CharonErrorHandler
         switch (true) {
 
             case $exception instanceof EntityNotFoundException:
-            case $exception instanceof ModelNotFoundException:
                 return $this->jsonApiErrorResponse(
                     self::TITLE_RESOURCE_NOT_FOUND,
                     $exception->getErrorMessage(),
+                    [],
+                    404
+                );
+
+            case $exception instanceof ModelNotFoundException:
+                return $this->jsonApiErrorResponse(
+                    self::TITLE_RESOURCE_NOT_FOUND,
+                    $exception->getMessage(),
                     [],
                     404
                 );
@@ -63,7 +70,7 @@ class CharonErrorHandler
 
             case $exception instanceof ValidationException:
                 return $this->jsonApiErrorResponse(
-                    $exception->getErrorMessage(),
+                    $exception->getMessage(),
                     null,
                     [],
                     422
