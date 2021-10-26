@@ -3,6 +3,8 @@
 namespace CatLab\Charon\Laravel\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 /**
  * Class AbstractMiddleware
@@ -11,6 +13,22 @@ use Illuminate\Http\Request;
 abstract class AbstractMiddleware
 {
     /**
+     * @param $name
+     * @return string
+     */
+    protected function bracketToDotNotation($name)
+    {
+        if (!Str::contains($name, '[')) {
+            return $name;
+        }
+
+        $name = str_replace('[', '.', $name);
+        $name = str_replace(']', '', $name);
+
+        return $name;
+    }
+
+    /**
      * Get input value from a specific container.
      * @param Request $request
      * @param string $in
@@ -18,6 +36,28 @@ abstract class AbstractMiddleware
      * @return mixed
      */
     protected function getInput($request, $in, $name)
+    {
+        $name = $this->bracketToDotNotation($name);
+        if (!Str::contains($name, '.')) {
+            return $this->getRawInput($request, $in, $name);
+        }
+
+        $parts = explode('.', $name);
+        $input = $this->getRawInput($request, $in, array_shift($parts));
+        if (!is_array($input)) {
+            return null;
+        }
+
+        return Arr::get($input, implode('.', $parts));
+    }
+
+    /**
+     * @param $request
+     * @param $in
+     * @param $name
+     * @return mixed
+     */
+    protected function getRawInput($request, $in, $name)
     {
         switch ($in)
         {
@@ -40,6 +80,25 @@ abstract class AbstractMiddleware
         }
     }
 
+    protected function setInput($request, $in, $name, $value)
+    {
+        $name = $this->bracketToDotNotation($name);
+        if (!Str::contains($name, '.')) {
+            return $this->setRawInput($request, $in, $name, $value);
+        }
+
+        $parts = explode('.', $name);
+        $name = array_shift($parts);
+
+        $input = $this->getRawInput($request, $in, $name);
+        if (!is_array($input)) {
+            $input = [];
+        }
+        Arr::set($input, implode('.', $parts), $value);
+
+        $this->setRawInput($request, $in, $name, $input);
+    }
+
     /**
      * @param Request $request
      * @param string $in
@@ -47,8 +106,9 @@ abstract class AbstractMiddleware
      * @param mixed $value
      * @return void
      */
-    protected function setInput($request, $in, $name, $value)
+    protected function setRawInput($request, $in, $name, $value)
     {
+        $name = $this->bracketToDotNotation($name);
         switch ($in)
         {
             case 'header':

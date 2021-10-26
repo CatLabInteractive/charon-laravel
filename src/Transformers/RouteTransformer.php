@@ -3,6 +3,7 @@
 namespace CatLab\Charon\Laravel\Transformers;
 
 use CatLab\Charon\Collections\RouteCollection;
+use CatLab\Charon\Enums\Cardinality;
 use CatLab\Charon\Laravel\Middleware\InputTransformer;
 use CatLab\Charon\Laravel\Middleware\InputValidator;
 use CatLab\Charon\Library\TransformerLibrary;
@@ -35,9 +36,23 @@ class RouteTransformer
 
             $laravelRoute = $this->createRoute($route);
 
+            $parameters = $route->getParameters();
+
+            // Check return
+            $returnValues = $route->getReturnValues();
+            $hasManyReturnValue = false;
+            foreach ($returnValues as $returnValue) {
+                $hasManyReturnValue =
+                    $hasManyReturnValue || $returnValue->getCardinality() == Cardinality::MANY;
+            }
+
+            foreach ($route->getExtraParameters($hasManyReturnValue) as $parameter) {
+                $parameters[] = $parameter;
+            }
+
             // The InputTransformer middleware makes sure that the parameters that require a
             // transformation (for example DateTimes) are transformed before the controller takes charge.
-            foreach ($route->getParameters() as $parameter) {
+            foreach ($parameters as $parameter) {
 
                 // Body parameter are not transformed or validated at middleware stage.
                 // That's why we skip them here.
