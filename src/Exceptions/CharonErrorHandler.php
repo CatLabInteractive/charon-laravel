@@ -24,6 +24,7 @@ class CharonErrorHandler
      */
     const TITLE_RESOURCE_NOT_FOUND = 'Resource not found.';
     const TITLE_RESOURCE_VALIDATION_FAILED = 'Resource validation failed.';
+    const TITLE_INPUT_VALIDATION_FAILED = 'Input validation failed.';
 
     /**
      * @var string
@@ -67,6 +68,9 @@ class CharonErrorHandler
 
             case $exception instanceof ResourceValidationException:
                 return $this->getResourceValidationResponse($exception);
+
+            case $exception instanceof InputValidatorException:
+                return $this->getInputValidatorException($exception);
 
             case $exception instanceof ValidationException:
                 return $this->jsonApiErrorResponse(
@@ -166,5 +170,40 @@ class CharonErrorHandler
         return response()->json($data, $status, [
             'Content-Type' => $this->responseType
         ]);
+    }
+
+    /**
+     * @param InputValidatorException $exception
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function getInputValidatorException(InputValidatorException $exception)
+    {
+        $errors = [];
+        foreach ($exception->getMessages() as $validationMessage) {
+            /** @var Message $validationMessage */
+            /** @var Message $validationMessage */
+            $property = $validationMessage->getPropertyName();
+
+            $source = [
+                'pointer' => '/' . $exception->getContainer() . '/' . $property
+            ];
+
+            $error = [
+                'status' => 400,
+                'source' => $source,
+                'title' => $this->processMessage(self::TITLE_INPUT_VALIDATION_FAILED),
+                'detail' => $this->processDetail($validationMessage, [ $property ]),
+                'provided' => $validationMessage->getProvidedValue()
+            ];
+
+            if ($validationMessage instanceof TranslatableMessage) {
+                $error['message_template'] = $validationMessage->getTemplate();
+                $error['message_values'] = $validationMessage->getValues();
+            }
+
+            $errors[] = $error;
+        }
+
+        return $this->toJsonApiResponse(['errors' => $errors ], 400);
     }
 }

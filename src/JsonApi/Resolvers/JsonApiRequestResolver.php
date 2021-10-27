@@ -68,17 +68,22 @@ class JsonApiRequestResolver extends RequestResolver
 
     /**
      * @param $request
-     * @return mixed
+     * @return string[]
      */
     public function getSorting($request)
     {
-        $parameter = $this->getParameter($request, ResourceTransformer::SORT_PARAMETER);
-
-        if (Str::startsWith($parameter, '-')) {
-            $parameter = '!' . Str::substr($parameter, 1);
+        $sortFields = $this->getParameter($request, ResourceTransformer::SORT_PARAMETER);
+        if (!is_array($sortFields)) {
+            $sortFields = [ $sortFields ];
         }
 
-        return $parameter;
+        foreach ($sortFields as $k => $v) {
+            if (Str::startsWith($v, '-')) {
+                $sortFields[$k] = '!' . Str::substr($v, 1);
+            }
+        }
+
+        return $sortFields;
     }
 
     /**

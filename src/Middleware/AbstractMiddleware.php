@@ -108,7 +108,6 @@ abstract class AbstractMiddleware
      */
     protected function setRawInput($request, $in, $name, $value)
     {
-        $name = $this->bracketToDotNotation($name);
         switch ($in)
         {
             case 'header':

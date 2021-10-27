@@ -553,7 +553,10 @@ trait JsonApiResourceController
         }
 
         if ($toExpand = Request::query('include')) {
-            $context->expandFields(array_map('trim', explode(',', $toExpand)));
+            if (!is_array($toExpand)) {
+                $toExpand = explode(',', $toExpand);
+            }
+            $context->expandFields(array_map('trim', $toExpand));
         }
 
         $context->addProcessor(new PaginationProcessor(PaginationBuilder::class));

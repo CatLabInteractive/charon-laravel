@@ -45,7 +45,7 @@ class Route extends \CatLab\Charon\Models\Routing\Route
                     // Sortable field
                     if ($field->isSortable() && $hasCardinalityMany) {
                         $sortValues[] = $field->getDisplayName();
-                        $sortValues[] = '!' . $field->getDisplayName();
+                        $sortValues[] = '-' . $field->getDisplayName();
                     }
 
                     // Visible

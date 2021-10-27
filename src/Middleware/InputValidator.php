@@ -67,7 +67,7 @@ class InputValidator extends AbstractMiddleware
                 $validators->validate($parameter, $v);
             }
         } catch (PropertyValidationException $e) {
-            throw InputValidatorException::make($e);
+            throw InputValidatorException::make($in, $e);
         }
     }
 }
