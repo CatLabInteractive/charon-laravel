@@ -146,4 +146,25 @@ class Route extends \CatLab\Charon\Models\Routing\Route
 
         return $filter;
     }
+
+    /**
+     * @param Field $field
+     * @return Parameter
+     * @throws \CatLab\Charon\Exceptions\InvalidScalarException
+     */
+    protected function getSearchField(Field $field)
+    {
+        $filter = (new QueryParameter(JsonApiRequestResolver::SEARCH_PARAMETER . '[' . $field->getDisplayName() . ']'))
+            ->setType($field->getType())
+            ->describe('Search results on ' . $field->getDisplayName());
+
+        // Check for applicable requirements
+        foreach ($field->getRequirements() as $requirement) {
+            if ($requirement instanceof InArray) {
+                $filter->enum($requirement->getValues());
+            }
+        }
+
+        return $filter;
+    }
 }

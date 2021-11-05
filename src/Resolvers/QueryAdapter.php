@@ -92,7 +92,12 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         $operator = Operator::EQ
     ) {
         $queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
-        $queryBuilder->where($this->getQualifiedName($field), $operator, $value);
+
+        if ($operator === Operator::SEARCH) {
+            $queryBuilder->where($this->getQualifiedName($field), 'LIKE', '%' . $value . '%');
+        } else {
+            $queryBuilder->where($this->getQualifiedName($field), $operator, $value);
+        }
     }
 
     /**
