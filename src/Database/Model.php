@@ -77,7 +77,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
      * @param Model[] $childEntities
      * @param mixed[] $parameters
      */
-    public function editChildrenInEntity($relation, $childEntities, $parameters)
+    public function editChildrenInEntity($relation, $childEntities, $parameters = [])
     {
         $this->addToChildArray('editedChildren', $relation, $childEntities, $parameters);
     }
@@ -87,7 +87,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
      * @param Model[] $childEntities
      * @param mixed[] $parameters
      */
-    public function removeChildrenFromEntity($relation, $childEntities, $parameters)
+    public function removeChildrenFromEntity($relation, $childEntities, $parameters = [])
     {
         $this->addToChildArray('removedChildren', $relation, $childEntities, $parameters);
 
