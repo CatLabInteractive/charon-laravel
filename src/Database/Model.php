@@ -189,6 +189,10 @@ class Model extends \Illuminate\Database\Eloquent\Model
                     foreach ($children as $child) {
                         $child->delete();
                     }
+                } elseif ($relationship instanceof MorphMany) {
+                    foreach ($children as $child) {
+                        $child->delete();
+                    }
                 } else {
                     throw PropertySetterException::makeTranslatable(
                         'Relationship %s is not implemented yet.',
