@@ -52,7 +52,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
 
         foreach ($childEntities as $child) {
 
-            $relationship = call_user_func([ $this, $relation ]);
+            $relationship = call_user_func_array([$this, $relation], $setterParameters);
             if (
                 $relationship instanceof HasMany ||
                 $relationship instanceof MorphMany
@@ -145,7 +145,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
                 if (method_exists($this, $magicMethod)) {
                     call_user_func([ $this, $magicMethod ], $children, $parameters);
                 } else {
-                    $relationship = call_user_func([$this, $relation]);
+                    $relationship = call_user_func_array([$this, $relation], $parameters);
                     if ($relationship instanceof HasMany) {
                         $relationship->saveMany($children);
                     } else if ($relationship instanceof BelongsToMany) {
@@ -177,7 +177,7 @@ class Model extends \Illuminate\Database\Eloquent\Model
             'removedChildren',
             function($relation, $children, $parameters) use (&$toReload) {
 
-                $relationship = call_user_func([$this, $relation]);
+                $relationship = call_user_func_array([$this, $relation], $parameters);
 
                 if ($relationship instanceof BelongsToMany) {
                     $ids = [];
