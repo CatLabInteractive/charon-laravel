@@ -163,7 +163,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      * @param RelationshipField $field
      * @param PropertyValueCollection[] $identifiers
      * @param Context $context
-     * @return mixed
+     * @return void
      * @throws InvalidPropertyException
      * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
@@ -225,16 +225,16 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      */
     protected function removeChildrenFromEntity($entity, $name, $childEntities, $parameters = [])
     {
-        /** @var $entity Model */
-        if ($entity instanceof Model) {
-            $entity->removeChildrenFromEntity($name, $childEntities, $parameters);
-            return;
-        }
-
         // Check for add method
         if ($this->methodExists($entity, 'remove'.ucfirst($name))) {
+
             array_unshift($parameters, $childEntities);
             call_user_func_array(array($entity, 'remove'.ucfirst($name)), $parameters);
+
+        } elseif ($entity instanceof Model) {
+
+            $entity->removeChildrenFromEntity($name, $childEntities, $parameters);
+
         } else {
 
             $relationship = $entity->$name();
