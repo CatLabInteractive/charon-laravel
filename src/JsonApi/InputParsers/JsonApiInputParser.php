@@ -39,6 +39,14 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
     private $contentTypeParameters;
 
     /**
+     * @return mixed|string
+     */
+    protected function getContentType()
+    {
+        return mb_strtolower(Request::header('content-type'));
+    }
+
+    /**
      * @return bool
      */
     protected function hasApplicableContentType()
