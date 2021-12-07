@@ -32,6 +32,7 @@ use CatLab\Charon\Models\StaticResourceDefinitionFactory;
 use CatLab\Charon\Pagination\PaginationBuilder;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Response;
@@ -392,8 +393,15 @@ trait JsonApiResourceController
             $entityId = $inputResource
                 ->getProperties()
                 ->getIdentifiers()
-                ->first()
-                ->getValue();
+                ->first();
+
+            if (!$entityId) {
+                throw new ModelNotFoundException('Could not find resource identifiers. ' .
+                    'Are you trying to do a batch edit? Don\'t forget to add the bulk extension to your content type. '.
+                    '(ie. application/vnd.api+json; ext="bulk"');
+            }
+
+            $entityId = $entityId->getValue();
 
             $entity = $this->callEntityMethod($request, 'find', $entityId);
             if (!$entity) {

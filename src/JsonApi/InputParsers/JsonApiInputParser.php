@@ -106,6 +106,7 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
      * @param Context $context
      * @param null $request
      * @return ResourceCollection|null
+     * @throws InputDecodeException
      */
     public function getResources(
         ResourceTransformer $resourceTransformer,
@@ -261,6 +262,8 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
     /**
      * Get all parameters that were set in the 'content type' header.
      * http://springbot.github.io/json-api/extensions/
+     *
+     * Example: Content-type: application/vnd.api+json; ext="bulk"
      * @return array
      */
     private function getContentTypeParameters()
