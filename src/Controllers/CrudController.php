@@ -233,10 +233,29 @@ trait CrudController
         $inputResource = $this->bodyToResource($writeContext);
 
         try {
-            $inputResource->validate($writeContext, $entity, new CurrentPath(), false);
+            return $this->processPatchResource($request, $entity, $inputResource, $writeContext);
         } catch (ResourceValidationException $e) {
             return $this->getValidationErrorResponse($e);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @param $entity
+     * @param RESTResource $inputResource
+     * @param Context $writeContext
+     * @return ResourceResponse
+     * @throws RequirementValidationException
+     * @throws ResourceValidationException
+     * @throws ValidationException
+     */
+    protected function processPatchResource(
+        Request $request,
+        $entity,
+        \CatLab\Charon\Interfaces\RESTResource $inputResource,
+        Context $writeContext
+    ) {
+        $inputResource->validate($writeContext, $entity, new CurrentPath(), false);
 
         $entity = $this->toEntity($inputResource, $writeContext, $entity);
 

@@ -51,6 +51,14 @@ class JsonApiResponse extends ResourceResponse
     }
 
     /**
+     * @return RESTResource[]
+     */
+    public function getIncluded()
+    {
+        return $this->included;
+    }
+
+    /**
      * @return mixed
      */
     public function toArray()

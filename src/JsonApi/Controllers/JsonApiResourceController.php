@@ -384,58 +384,51 @@ trait JsonApiResourceController
         $writeContext = $this->getContext(Action::EDIT);
         $inputResources = $this->bodyToResources($writeContext);
 
-        $existingEntities = [];
-
-        // first validate all resources
-        foreach ($inputResources as $resourceId => $inputResource) {
-
-            /** @var RESTResource $inputResource */
-            $entityId = $inputResource
-                ->getProperties()
-                ->getIdentifiers()
-                ->first();
-
-            if (!$entityId) {
-                throw new ModelNotFoundException('Could not find resource identifiers. ' .
-                    'Are you trying to do a batch edit? Don\'t forget to add the bulk extension to your content type. '.
-                    '(ie. application/vnd.api+json; ext="bulk"');
-            }
-
-            $entityId = $entityId->getValue();
-
-            $entity = $this->callEntityMethod($request, 'find', $entityId);
-            if (!$entity) {
-                $this->notFound($entityId, $this->getEntityClassName());
-            }
-
-            $existingEntities[$resourceId] = $entity;
-
-            try {
-                $inputResource->validate($writeContext, $entity);
-            } catch (ResourceValidationException $e) {
-                return $this->getValidationErrorResponse($e);
-            }
-        }
-
         $createdResources = new ResourceCollection();
+        $includedResources = new ResourceCollection();
+
+        try {
+            \DB::transaction(function() use ($createdResources, $inputResources, $request, $writeContext, $includedResources) {
+
+                // first validate all resources
+                foreach ($inputResources as $resourceId => $inputResource) {
+
+                    /** @var RESTResource $inputResource */
+                    $entityId = $inputResource
+                        ->getProperties()
+                        ->getIdentifiers()
+                        ->first();
+
+                    if (!$entityId) {
+                        throw new ModelNotFoundException('Could not find resource identifiers. ' .
+                            'Are you trying to do a batch edit? Don\'t forget to add the bulk extension to your content type. '.
+                            '(ie. application/vnd.api+json; ext="bulk"');
+                    }
+
+                    $entityId = $entityId->getValue();
+
+                    $entity = $this->callEntityMethod($request, 'find', $entityId);
+                    if (!$entity) {
+                        $this->notFound($entityId, $this->getEntityClassName());
+                    }
+
+                    /** @var JsonApiResponse $response */
+                    $response = $this->processPatchResource($request, $entity, $inputResource, $writeContext);
+                    if ($response->getResource()) {
+                        $createdResources->add($response->getResource());
+                    }
+
+                    foreach ($response->getIncluded() as $included) {
+                        $includedResources->add($included);
+                    }
+                }
+
+            });
+        } catch (ResourceValidationException $e) {
+            return $this->getValidationErrorResponse($e);
+        }
 
         $readContext = $this->getContext(Action::VIEW);
-
-        // now save all resources
-        foreach ($inputResources as $resourceId => $inputResource) {
-
-            /** @var RESTResource $inputResource */
-            $entity = $this->toEntity(
-                $inputResource,
-                $writeContext,
-                $existingEntities[$resourceId]
-            );
-
-            // Save the entity
-            $entity = $this->saveEntity($request, $entity);
-
-            $createdResources->add($this->toResource($entity, $readContext));
-        }
 
         // Turn back into a resource
         if (
@@ -445,9 +438,17 @@ trait JsonApiResourceController
             // one resource was submitted, the response should still be an array.
         ) {
             $response = $this->getResourceResponse($createdResources, $readContext);
+
+            foreach ($includedResources as $includedResource) {
+                $response->include($includedResource);
+            }
         } else {
             // only take the first (and only) resource
             $response = $this->getResourceResponse($createdResources->first(), $readContext);
+
+            foreach ($includedResources as $includedResource) {
+                $response->include($includedResource);
+            }
         }
 
         $response->setStatusCode(201);
