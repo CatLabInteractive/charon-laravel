@@ -11,6 +11,7 @@ use CatLab\Charon\Enums\Cardinality;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Factories\ResourceFactory;
 use CatLab\Charon\Interfaces\RESTResource;
+use CatLab\Charon\Laravel\Contracts\Response as ResponseContract;
 use CatLab\Charon\Laravel\Controllers\CrudController;
 use CatLab\Charon\Laravel\Controllers\ResourceController;
 use CatLab\Charon\Laravel\JsonApi\InputParsers\JsonApiInputParser;
@@ -460,7 +461,7 @@ trait JsonApiResourceController
      * @param \CatLab\Charon\Interfaces\Context|null $context
      * @return ResourceResponse
      */
-    protected function getResourceResponse($data, \CatLab\Charon\Interfaces\Context $context  = null)
+    protected function getResourceResponse($data, \CatLab\Charon\Interfaces\Context $context  = null): ResponseContract
     {
         return new JsonApiResponse($data, $context);
     }
