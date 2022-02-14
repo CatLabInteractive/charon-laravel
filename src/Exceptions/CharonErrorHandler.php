@@ -3,6 +3,7 @@
 
 namespace CatLab\Charon\Laravel\Exceptions;
 
+use CatLab\Charon\Exceptions\CharonException;
 use CatLab\Charon\Exceptions\InputDecodeException;
 use CatLab\Charon\Exceptions\NoInputDataFound;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
@@ -12,6 +13,7 @@ use CatLab\Requirements\Models\TranslatableMessage;
 use Exception;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Throwable;
 
 /**
  * Class Handler
@@ -37,7 +39,7 @@ class CharonErrorHandler
      * @param Exception $exception
      * @return \Illuminate\Http\JsonResponse|null
      */
-    public function handleException($request, Exception $exception)
+    public function handleException($request, Throwable $exception)
     {
         switch (true) {
 
@@ -73,9 +75,10 @@ class CharonErrorHandler
                 return $this->getInputValidatorException($exception);
 
             case $exception instanceof ValidationException:
+            case $exception instanceof CharonHttpException:
                 return $this->jsonApiErrorResponse(
                     $exception->getMessage(),
-                    null,
+                    $exception->getMessage(),
                     [],
                     422
                 );

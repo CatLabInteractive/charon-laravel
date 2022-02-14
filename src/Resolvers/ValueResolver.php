@@ -119,6 +119,10 @@ class ValueResolver
      */
     protected function methodExists($model, $method)
     {
+        if ($model === null || $method === null) {
+            return false;
+        }
+
         return method_exists($model, $method);
     }
 }
