@@ -34,7 +34,11 @@ class JsonApiRequestResolver extends RequestResolver
         }
 
         if (isset($request[$filterName][$field->getDisplayName()])) {
-            return $request[$filterName][$field->getDisplayName()];
+            $value = $request[$filterName][$field->getDisplayName()];
+            if ($field->getTransformer()) {
+                $value = $field->getTransformer()->toParameterValue($value);
+            }
+            return $value;
         }
 
         return null;

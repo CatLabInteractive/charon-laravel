@@ -8,7 +8,6 @@ use CatLab\Charon\Laravel\Middleware\InputTransformer;
 use CatLab\Charon\Laravel\Middleware\InputValidator;
 use CatLab\Charon\Library\TransformerLibrary;
 use CatLab\Charon\Models\Routing\Parameters\Base\Parameter;
-use CatLab\Charon\Transformers\ArrayTransformer;
 use \Route;
 
 /**

@@ -73,12 +73,18 @@ trait JsonApiResourceController
             $controller = class_basename(static::class);
         }
 
-        if (!isset($options['id'])) {
-            $options['id'] = $resourceId;
+        if (!isset($options[RouteCollection::OPTIONS_IDENTIFIER_NAME])) {
+            $options[RouteCollection::OPTIONS_IDENTIFIER_NAME] = $resourceId;
         }
 
-        if (!isset($options['only'])) {
-            $options['only'] = [ 'index', 'view', 'store', 'patch', 'destroy' ];
+        if (!isset($options[RouteCollection::OPTIONS_ONLY_INCLUDE_METHODS])) {
+            $options[RouteCollection::OPTIONS_ONLY_INCLUDE_METHODS] = [
+                RouteCollection::OPTIONS_METHOD_INDEX,
+                RouteCollection::OPTIONS_METHOD_VIEW,
+                RouteCollection::OPTIONS_METHOD_STORE,
+                RouteCollection::OPTIONS_METHOD_PATCH,
+                RouteCollection::OPTIONS_METHOD_DESTROY
+            ];
         }
 
         $childResource = $routes->resource(
@@ -95,7 +101,7 @@ trait JsonApiResourceController
         }
 
         // add support for batch update
-        if (in_array('patch', $options['only'])) {
+        if (in_array(RouteCollection::OPTIONS_METHOD_PATCH, $options[RouteCollection::OPTIONS_ONLY_INCLUDE_METHODS])) {
             $childResource->patch($path, $controller . '@batchEdit')
                 ->summary(function () use ($resourceDefinitionObject) {
                     $entityName = $resourceDefinitionObject->getEntityName(true);
@@ -129,9 +135,12 @@ trait JsonApiResourceController
     ) {
         $resourceDefinitionFactory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($field->getResourceDefinition());
 
-        $only = isset($options['only']) ? $options['only'] : [ 'view', 'patch' ];
+        $only = $options[RouteCollection::OPTIONS_ONLY_INCLUDE_METHODS] ?? [
+            RouteCollection::OPTIONS_METHOD_VIEW,
+            RouteCollection::OPTIONS_METHOD_PATCH
+        ];
 
-        if (in_array('view', $only)) {
+        if (in_array(RouteCollection::OPTIONS_METHOD_VIEW, $only)) {
             $routes->get($path . '/{' . $resourceId . '}/relationships/{"' . $field->getDisplayName() . '"}', $controller . '@viewRelationship')
                 ->summary(function () use ($field, $resourceDefinitionFactory) {
                     $entityName = $resourceDefinitionFactory->getDefault()->getEntityName(false);
