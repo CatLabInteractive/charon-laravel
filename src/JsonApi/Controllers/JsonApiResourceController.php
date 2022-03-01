@@ -27,14 +27,12 @@ use CatLab\Charon\Laravel\Resolvers\PropertySetter;
 use CatLab\Charon\Laravel\Resolvers\QueryAdapter;
 use CatLab\Charon\Laravel\ResourceTransformer;
 use CatLab\Charon\Models\Context;
-use CatLab\Charon\Models\CurrentPath;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\StaticResourceDefinitionFactory;
 use CatLab\Charon\Pagination\PaginationBuilder;
 use CatLab\Requirements\Exceptions\ResourceValidationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Response;
 

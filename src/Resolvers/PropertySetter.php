@@ -187,11 +187,11 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
             $children = clone $existingChildren;
 
             if (count($identifiers) > 0) {
-                $children->where(function ($builder) use ($identifiers) {
+                $children->where(function ($builder) use ($identifiers, $context) {
                     foreach ($identifiers as $item) {
                         /** @var PropertyValueCollection $item */
-                        $builder->where(function ($builder) use ($item) {
-                            foreach ($item->toMap() as $k => $v) {
+                        $builder->where(function ($builder) use ($item, $context) {
+                            foreach ($item->transformToEntityValuesMap($context) as $k => $v) {
                                 $builder->orWhere($k, '!=', $v);
                             }
                         });

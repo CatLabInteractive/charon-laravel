@@ -8,6 +8,7 @@ use CatLab\Charon\Exceptions\InvalidPropertyException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
 use CatLab\Charon\Interfaces\ResourceTransformer;
+use CatLab\Charon\Models\Identifier;
 use CatLab\Charon\Models\Properties\Base\Field;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,7 +26,7 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
      * @param ResourceTransformer $transformer
      * @param RelationshipField $field
      * @param mixed $parentEntity
-     * @param PropertyValueCollection $identifiers
+     * @param Identifier $identifier
      * @param Context $context
      * @return mixed
      * @throws InvalidPropertyException
@@ -35,9 +36,11 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         ResourceTransformer $transformer,
         RelationshipField $field,
         $parentEntity,
-        PropertyValueCollection $identifiers,
+        Identifier $identifier,
         Context $context
     ) {
+        $identifiers = $identifier->getIdentifiers();
+
         $entities = $transformer
             ->getPropertyResolver()
             ->resolveProperty($transformer, $parentEntity, $field, $context);
@@ -57,7 +60,7 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         }
 
         foreach ($entities as $entity) {
-            if ($this->entityEquals($transformer, $entity, $identifiers, $context)) {
+            if ($this->entityEquals($transformer, $entity, $identifier, $context)) {
                 return $entity;
             }
         }

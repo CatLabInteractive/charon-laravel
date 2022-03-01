@@ -3,6 +3,7 @@
 namespace CatLab\Charon\Laravel\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
@@ -119,8 +120,9 @@ abstract class AbstractMiddleware
                 break;
 
             case 'path':
+                /** @var Route $route */
                 $route = call_user_func($request->getRouteResolver());
-                $route->parameter($name, $value);
+                $route->setParameter($name, $value);
                 break;
 
             default:

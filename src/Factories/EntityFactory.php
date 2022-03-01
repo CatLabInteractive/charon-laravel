@@ -30,8 +30,10 @@ class EntityFactory implements \CatLab\Charon\Interfaces\EntityFactory
      * @return mixed
      * @throws Exception
      */
-    public function resolveLinkedEntity($parent, string $entityClassName, array $identifiers, Context $context)
+    public function resolveLinkedEntity($parent, string $entityClassName, Identifier $identifier, Context $context)
     {
+        $identifiers = $identifier->getProperties()->transformToEntityValuesMap($context);
+
         if (isset($identifiers['id'])) {
             return $this->getAuthorizedResolvedEntity(
                 $entityClassName::find($identifiers['id'])
@@ -61,19 +63,20 @@ class EntityFactory implements \CatLab\Charon\Interfaces\EntityFactory
      */
     public function resolveFromIdentifier(string $entityClassName, Identifier $identifier, Context $context)
     {
-        $data = $identifier->toArray();
-        if (isset($data['id'])) {
+        $identifiers = $identifier->getProperties()->transformToEntityValuesMap($context);
+
+        if (isset($identifiers['id'])) {
             return $this->getAuthorizedResolvedEntity(
-                $entityClassName::find($data['id'])
+                $entityClassName::find($identifiers['id'])
             );
         }
 
-        if (count($data) === 0) {
+        if (count($identifiers) === 0) {
             return null;
         }
 
         $query = $entityClassName::query();
-        foreach ($data as $k => $v) {
+        foreach ($identifiers as $k => $v) {
             $query->where($k, '=', $v);
         }
 

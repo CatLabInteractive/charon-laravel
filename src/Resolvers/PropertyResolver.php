@@ -9,6 +9,7 @@ use CatLab\Charon\Exceptions\InvalidPropertyException;
 use CatLab\Charon\Exceptions\VariableNotFoundInContext;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceTransformer;
+use CatLab\Charon\Models\Identifier;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\Values\PropertyValue;
 use Illuminate\Database\Eloquent\Builder;
@@ -66,7 +67,7 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
      * @param ResourceTransformer $transformer
      * @param RelationshipField $field
      * @param mixed $parentEntity
-     * @param PropertyValueCollection $identifiers
+     * @param Identifier $identifier
      * @param Context $context
      * @return mixed
      * @throws InvalidPropertyException
@@ -76,9 +77,11 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
         ResourceTransformer $transformer,
         RelationshipField $field,
         $parentEntity,
-        PropertyValueCollection $identifiers,
+        Identifier $identifier,
         Context $context
     ) {
+        $identifiers = $identifier->getIdentifiers();
+
         /** @var Builder $entities */
         $entities = $this->resolveProperty($transformer, $parentEntity, $field, $context);
         if ($entities === null) {
