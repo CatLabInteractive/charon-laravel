@@ -84,8 +84,21 @@ trait CrudController
     {
         $this->request = $request;
 
-        $this->authorizeIndex($request);
+        $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
+        $records = $records ?? $this->getRecordLimit();
+
         $context = $this->getContext(Action::INDEX);
+
+        // First load the filters so that we can use these in the policy
+        $filters = $this->resourceTransformer->getFilters(
+            $this->getRequest()->query(),
+            $resourceDefinition,
+            $context
+        );
+
+        $this->authorizeIndex($request, $filters);
+
+
 
         $resources = $this->getResources($this->getIndexQuery($request), $context);
         return $this->getResourceResponse($resources, $context);

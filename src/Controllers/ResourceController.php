@@ -118,8 +118,7 @@ trait ResourceController
     }
 
     /**
-     * From a query builder, filter models based on input and processor and return the resulting
-     * models.
+     * From a query builder, filter models based on input and processor and return the resulting models.
      * Since order is important, the returned Collection will be a plain laravel collection!
      * @param $queryBuilder
      * @param Context $context
@@ -149,9 +148,16 @@ trait ResourceController
             $factory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($resourceDefinition);
 
             if ($isQueryBuilder) {
-                $filterResults = $this->resourceTransformer->applyFilters(
+
+                $filters = $this->resourceTransformer->getFilters(
                     $this->getRequest()->query(),
                     $resourceDefinition,
+                    $context
+                );
+
+                $filterResults = $this->resourceTransformer->applyFilters(
+                    $this->getRequest()->query(),
+                    $filters,
                     $context,
                     $queryBuilder
                 );
@@ -182,6 +188,8 @@ trait ResourceController
 
         return new ModelFilterResults($models, $filterResults);
     }
+
+
 
     /**
      * @param ResourceDefinitionContract|string $resourceDefinition

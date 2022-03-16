@@ -8,6 +8,7 @@ use CatLab\Charon\Interfaces\ResourceTransformer;
 use CatLab\Charon\Exceptions\InvalidPropertyException;
 use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Laravel\Exceptions\PropertySetterException;
+use CatLab\Charon\Models\Identifier;
 use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\Properties\ResourceField;
 use CatLab\Charon\Interfaces\PropertyResolver as PropertyResolverContract;
@@ -161,7 +162,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
      * @param PropertyResolverContract $propertyResolver
      * @param $entity
      * @param RelationshipField $field
-     * @param PropertyValueCollection[] $identifiers
+     * @param Identifier[] $identifiers
      * @param Context $context
      * @return void
      * @throws InvalidPropertyException
@@ -189,9 +190,14 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
             if (count($identifiers) > 0) {
                 $children->where(function ($builder) use ($identifiers, $context) {
                     foreach ($identifiers as $item) {
-                        /** @var PropertyValueCollection $item */
+
+                        if (!$item instanceof Identifier) {
+                            throw new \LogicException('All provided identifiers to keep must implement ' . Identifier::class);
+                        }
+
+                        /** @var Identifier $item */
                         $builder->where(function ($builder) use ($item, $context) {
-                            foreach ($item->transformToEntityValuesMap($context) as $k => $v) {
+                            foreach ($item->getIdentifiers()->transformToEntityValuesMap($context) as $k => $v) {
                                 $builder->orWhere($k, '!=', $v);
                             }
                         });
