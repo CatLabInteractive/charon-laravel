@@ -2,12 +2,12 @@
 
 namespace CatLab\Charon\Laravel\Controllers;
 
+use CatLab\Charon\Collections\FilterCollection;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Exceptions\ResourceException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
-use CatLab\Charon\Interfaces\ResourceDefinitionFactory;
 use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
@@ -41,7 +41,7 @@ trait CrudController
     abstract function getContext($action = Action::VIEW, $parameters = []) : Context;
     abstract function getResourceDefinition(): ResourceDefinition;
 
-    abstract function getResources($queryBuilder, Context $context, $resourceDefinition = null, $records = null);
+    abstract function getResources($queryBuilder, Context $context, $resourceDefinition = null);
 
     abstract function bodyToResource(Context $context, $resourceDefinition = null) : RESTResource;
     abstract function bodyToResources(Context $context, $resourceDefinition = null) : ResourceCollection;
@@ -50,7 +50,7 @@ trait CrudController
     abstract function notFound($id, $resource);
     abstract function toEntity(RESTResource $resource, Context $context, $existingEntity = null, $resourceDefinition = null, $entityFactory = null);
 
-    abstract function toResources($entities, Context $context, $resourceDefinition = null) : ResourceCollection;
+    abstract function toResources($entities, Context $context, $resourceDefinition = null, $filterResults = null) : ResourceCollection;
     abstract function toResource($entity, Context $context, $resourceDefinition = null) : RESTResource;
 
     use AuthorizesRequests {
@@ -85,8 +85,6 @@ trait CrudController
         $this->request = $request;
 
         $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
-        $records = $records ?? $this->getRecordLimit();
-
         $context = $this->getContext(Action::INDEX);
 
         // First load the filters so that we can use these in the policy
@@ -96,11 +94,24 @@ trait CrudController
             $context
         );
 
+        // Authorize the request (and pass the filters so that the index policy can be processed correctly)
         $this->authorizeIndex($request, $filters);
 
+        // Get the query builder that will actually be used to load the entities
+        $queryBuilder = $this->getIndexQuery($request);
 
+        // Do the actual filtering based on the earlier calculated filters
+        $filteredModels = $this->getFilteredModels($queryBuilder, $context, $filters, $resourceDefinition);
 
-        $resources = $this->getResources($this->getIndexQuery($request), $context);
+        // Turn the models into resources
+        $resources = $this->toResources(
+            $filteredModels->getModels(),
+            $context,
+            $resourceDefinition,
+            $filteredModels->getFilterResults()
+        );
+
+        // And return those resources.
         return $this->getResourceResponse($resources, $context);
     }
 
@@ -438,11 +449,13 @@ trait CrudController
     /**
      * Checks if user is authorized to watch an index of the entities.
      * @param Request $request
+     * @param FilterCollection $filters
      * @throws AuthorizationException
      */
-    protected function authorizeIndex(Request $request)
+    protected function authorizeIndex(Request $request, FilterCollection $filters)
     {
-        $this->authorizeCrudRequest(Action::INDEX);
+        //$this->authorizeCrudRequest(Action::INDEX, $filters);
+        $this->authorize(Action::INDEX, [ $this->getEntityClassName(), $filters ]);
     }
 
     /**

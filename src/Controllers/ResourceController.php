@@ -3,6 +3,7 @@
 namespace CatLab\Charon\Laravel\Controllers;
 
 use CatLab\Base\Helpers\ArrayHelper;
+use CatLab\Charon\Collections\FilterCollection;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Factories\ResourceFactory;
@@ -55,8 +56,7 @@ trait ResourceController
      * @param $queryBuilder
      * @param Context $context
      * @param ResourceDefinition|string|null $resourceDefinition
-     * @param int|null $records
-     * @return Model[]
+     * @return ResourceCollection
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
      * @throws \CatLab\Charon\Exceptions\InvalidEntityException
      * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
@@ -66,47 +66,17 @@ trait ResourceController
      * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
-    public function getResources($queryBuilder, Context $context, $resourceDefinition = null, $records = null)
+    public function getResources($queryBuilder, Context $context, $resourceDefinition = null)
     {
         $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
-        $records = $records ?? $this->getRecordLimit();
 
-        return $this->filterAndGet($queryBuilder, $resourceDefinition, $context, $records);
-    }
+        $filters = $this->resourceTransformer->getFilters(
+            $this->getRequest()->query(),
+            $resourceDefinition,
+            $context
+        );
 
-    /**
-     * Apply any global filters that might be implemented by child classes.
-     * @param $queryBuilder
-     * @param $resourceDefinition
-     * @param $context
-     */
-    protected function applyGlobalFilters(
-        $queryBuilder,
-        ResourceDefinitionContract $resourceDefinition = null,
-        Context $context = null
-    ) {
-
-    }
-
-    /**
-     * @param $queryBuilder
-     * @param $resourceDefinition
-     * @param Context $context
-     * @param int $records
-     * @return mixed
-     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
-     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
-     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
-     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
-     * @throws \CatLab\Charon\Exceptions\IterableExpected
-     * @throws \CatLab\Charon\Exceptions\NotImplementedException
-     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
-     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
-     * @deprecated Use getModels()
-     */
-    public function filterAndGet($queryBuilder, $resourceDefinition, Context $context, $records = null)
-    {
-        $modelFilterResults = $this->getModels($queryBuilder, $context, $resourceDefinition, $records);
+        $modelFilterResults = $this->getFilteredModels($queryBuilder, $context, $filters, $resourceDefinition);
 
         //return $this->resourceTransformer->toResources($resourceDefinition, $models, $context, $filterResults);
         return $this->toResources(
@@ -122,21 +92,17 @@ trait ResourceController
      * Since order is important, the returned Collection will be a plain laravel collection!
      * @param $queryBuilder
      * @param Context $context
-     * @param null $resourceDefinition
-     * @param null $records
+     * @param FilterCollection $filters
+     * @param $resourceDefinition
      * @return ModelFilterResults
      * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
-    public function getModels(
+    protected function getFilteredModels(
         $queryBuilder,
         Context $context,
-        $resourceDefinition = null,
-        $records = null
+        FilterCollection $filters,
+        $resourceDefinition = null
     ) {
-        if (!isset($records)) {
-            $records = $this->getRecordLimit();
-        }
-
         $isQueryBuilder =
             $queryBuilder instanceof Builder ||
             $queryBuilder instanceof Relation;
@@ -148,13 +114,6 @@ trait ResourceController
             $factory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($resourceDefinition);
 
             if ($isQueryBuilder) {
-
-                $filters = $this->resourceTransformer->getFilters(
-                    $this->getRequest()->query(),
-                    $resourceDefinition,
-                    $context
-                );
-
                 $filterResults = $this->resourceTransformer->applyFilters(
                     $this->getRequest()->query(),
                     $filters,
@@ -168,13 +127,11 @@ trait ResourceController
 
         // apply global filters.
         if ($isQueryBuilder) {
-            $this->applyGlobalFilters($queryBuilder, $factory ? $factory->getDefault() : null, $context);
+            $this->applyGlobalFilters($queryBuilder, $factory?->getDefault(), $context);
         }
 
         // Process eager loading
         $this->resourceTransformer->processEagerLoading($queryBuilder, $resourceDefinition, $context);
-
-        //$queryBuilder = $filters->getQueryBuilder();
 
         if ($isQueryBuilder) {
             $models = $queryBuilder->get();
@@ -189,17 +146,13 @@ trait ResourceController
         return new ModelFilterResults($models, $filterResults);
     }
 
-
-
     /**
      * @param ResourceDefinitionContract|string $resourceDefinition
      * @param ResourceTransformerContract $resourceTransformer
      * @return $this
      */
-    public function setResourceDefinition(
-        $resourceDefinition,
-        $resourceTransformer = null
-    ) {
+    public function setResourceDefinition($resourceDefinition, $resourceTransformer = null)
+    {
         $this->resourceDefinition = $resourceDefinition;
 
         if (!isset($resourceTransformer)) {
@@ -254,7 +207,7 @@ trait ResourceController
      * @param Context $context
      * @param null $resourceDefinition
      * @param null $filterResults
-     * @return ResourceCollection
+     * @return \CatLab\Charon\Interfaces\ResourceCollection
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
      * @throws \CatLab\Charon\Exceptions\InvalidEntityException
      * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
@@ -317,7 +270,7 @@ trait ResourceController
     /**
      * @param Context $context
      * @param null $resourceDefinition
-     * @return \CatLab\Charon\Collections\ResourceCollection
+     * @return \CatLab\Charon\Interfaces\ResourceCollection
      * @throws \CatLab\Charon\Exceptions\NoInputDataFound
      * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
@@ -349,6 +302,20 @@ trait ResourceController
             $this->createEntityFactory(),
             $context
         );
+    }
+
+    /**
+     * Apply any global filters that might be implemented by child classes.
+     * @param $queryBuilder
+     * @param $resourceDefinition
+     * @param $context
+     */
+    protected function applyGlobalFilters(
+        $queryBuilder,
+        ResourceDefinitionContract $resourceDefinition = null,
+        Context $context = null
+    ) {
+
     }
 
     /**
@@ -400,67 +367,6 @@ trait ResourceController
         } else {
             throw new ModelNotFoundException('Resource ' . $id . ' not found.');
         }
-    }
-
-    /**
-     * Output a resource or a collection of resources
-     *
-     * @param $models
-     * @param array $parameters
-     * @param null $resourceDefinition
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
-     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
-     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
-     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
-     * @throws \CatLab\Charon\Exceptions\IterableExpected
-     * @throws \CatLab\Charon\Exceptions\NotImplementedException
-     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
-     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
-     */
-    protected function outputList($models, array $parameters = [], $resourceDefinition = null)
-    {
-        $resources = $this->filteredModelsToResources($models, $parameters, $resourceDefinition);
-        return $this->toResponse($resources);
-    }
-
-    /**
-     * @param $models
-     * @param array $parameters
-     * @param null $resourceDefinition
-     * @return array|\mixed[]
-     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
-     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
-     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
-     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
-     * @throws \CatLab\Charon\Exceptions\IterableExpected
-     * @throws \CatLab\Charon\Exceptions\NotImplementedException
-     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
-     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
-     */
-    protected function filteredModelsToResources($models, array $parameters = [], $resourceDefinition = null)
-    {
-        $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
-        $context = $this->getContext(Action::INDEX, $parameters);
-
-        return $this->filterAndGet(
-            $models,
-            $resourceDefinition,
-            $context,
-            $this->getRecordLimit()
-        );
-    }
-
-    /**
-     * @return int
-     */
-    protected function getRecordLimit()
-    {
-        $records = $this->getResourceTransformer()->getRequestResolver()->getRecords(Request::instance());
-        if (!$records) {
-            return 3;
-        }
-        return $records;
     }
 
     /**
