@@ -110,23 +110,16 @@ trait ResourceController
         $factory = null;
         $filterResults = null;
 
-        if ($resourceDefinition) {
-            $factory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($resourceDefinition);
-
-            if ($isQueryBuilder) {
-                $filterResults = $this->resourceTransformer->applyFilters(
-                    $this->getRequest()->query(),
-                    $filters,
-                    $context,
-                    $queryBuilder
-                );
-
-                $queryBuilder = $filterResults->getQueryBuilder();
-            }
-        }
-
-        // apply global filters.
         if ($isQueryBuilder) {
+            $filterResults = $this->resourceTransformer->applyFilters(
+                $this->getRequest()->query(),
+                $filters,
+                $context,
+                $queryBuilder
+            );
+
+            $queryBuilder = $filterResults->getQueryBuilder();
+
             $this->applyGlobalFilters($queryBuilder, $factory?->getDefault(), $context);
         }
 
