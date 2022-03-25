@@ -60,8 +60,10 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
         if ($this->methodExists($entity, $methodName)) {
             array_unshift($setterParameters, $value);
             call_user_func_array(array ($entity, $methodName), $setterParameters);
-        } else {
+        } elseif (method_exists($entity, $name)) {
             $entity->$name()->associate($value);
+        } else {
+            $entity->$name = $value;
         }
     }
 
@@ -77,8 +79,10 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
         $methodName = 'dissociate' . ucfirst($name);
         if ($this->methodExists($entity, $methodName)) {
             call_user_func_array(array ($entity, $methodName), $setterParameters);
-        } else {
+        } elseif (method_exists($entity, $name)) {
             $entity->$name()->dissociate();
+        } else {
+            $entity->$name = null;
         }
     }
 

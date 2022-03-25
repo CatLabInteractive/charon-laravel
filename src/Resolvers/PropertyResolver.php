@@ -96,16 +96,24 @@ class PropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
                     '=',
                     $identifier->getValue()
                 );
-            } else {
+                return $entities->first();
+            } elseif ($entities instanceof Builder) {
                 $entities = $entities->where(
                     $transformer->getQueryAdapter()->getQualifiedName($identifier->getField()),
                     '=',
                     $identifier->getValue()
                 );
+                return $entities->first();
+            } elseif (is_array($entities)) {
+                foreach ($entities as $entity) {
+                    if ($this->resolveProperty($transformer, $entity, $field, $context) === $identifier->getValue()) {
+                        return $entity;
+                    }
+                }
             }
         }
 
-        return $entities->first();
+        return null;
     }
 
     /**
