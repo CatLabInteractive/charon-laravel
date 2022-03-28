@@ -15,11 +15,10 @@
         }
     },
     "require": {
-        "catlabinteractive/charon": "^1.5.1"
+        "catlabinteractive/charon": "^1.5.3"
     },
     "require-dev": {
-        "laravel/framework": "^5.8.0",
-        "composer/composer": "^1.9",
+        "laravel/framework": "^9.0",
         "phpunit/phpunit": "^9.0"
     },
     "autoload-dev": {
