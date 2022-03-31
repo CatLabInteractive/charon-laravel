@@ -170,6 +170,7 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
      * Given input for a single resource (and it's possible nested children), return an array that is parseable
      * by the resource transformer fromArray method (ie, translate JSON-API to regular (nested) json.
      * @param $resourceData
+     * @return array
      */
     protected function getResourceInput($resourceData)
     {
@@ -235,11 +236,10 @@ class JsonApiInputParser extends \CatLab\Charon\InputParsers\JsonBodyInputParser
      */
     protected function getRelatedObject($relatedResource)
     {
-        if (isset($relatedResource['attributes'])) {
-            if (isset($relatedResource['id'])) {
-                $relatedResource['attributes']['id'] = $relatedResource['id'];
-            }
-
+        if (
+            isset($relatedResource['attributes']) ||
+            isset($relatedResource['relationships'])
+        ) {
             return $this->getResourceInput($relatedResource);
         } elseif (isset($relatedResource['id'])) {
             return [ 'id' => $relatedResource['id']];
