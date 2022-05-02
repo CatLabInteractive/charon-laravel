@@ -131,7 +131,7 @@ trait JsonApiResourceController
         $controller = null,
         $options = null
     ) {
-        $resourceDefinitionFactory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($field->getResourceDefinition());
+        $resourceDefinitionFactory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($field->getChildResourceDefinition());
 
         $only = $options[RouteCollection::OPTIONS_ONLY_INCLUDE_METHODS] ?? [
             RouteCollection::OPTIONS_METHOD_VIEW,
