@@ -55,24 +55,7 @@ class Route extends \CatLab\Charon\Models\Routing\Route
 
                     // Expandable field
                     if ($field instanceof RelationshipField) {
-                        if ($field->isViewable($returnValue->getContext()) && $field->isExpandable()) {
-                            $expandValues[] = $field->getDisplayName();
-                            $visibleValues[] = $field->getDisplayName() . '.*';
-
-                            // Also do sectond level expandable and filterable, but no further!
-                            $related = $field->getChildResource();
-                            foreach ($related->getFields() as $relatedField) {
-                                if ($relatedField->isVisible()) {
-                                    $visibleValues[] = $field->getDisplayName() . '.' . $relatedField->getDisplayName();
-                                }
-
-                                if ($relatedField instanceof RelationshipField) {
-                                    if ($relatedField->isExpandable()) {
-                                        $expandValues[] = $field->getDisplayName() . '.' . $relatedField->getDisplayName();
-                                    }
-                                }
-                            }
-                        }
+                        $this->addExpandableValues($field, $returnValue->getContext(), $visibleValues, $expandValues);
                     }
 
                     // Filterable fields
