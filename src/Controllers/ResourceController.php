@@ -247,6 +247,7 @@ trait ResourceController
     }
 
     /**
+     * @deprecated Use the ResourceTransformer directly
      * @param Context $context
      * @param null $resourceDefinition
      * @return RESTResource
@@ -256,11 +257,13 @@ trait ResourceController
      */
     public function bodyToResource(Context $context, $resourceDefinition = null) : RESTResource
     {
-        $resources = $this->bodyToResources($context, $resourceDefinition);
-        return $resources->first();
+        $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
+        return $this->resourceTransformer->fromInput($resourceDefinition, $context, $this->getRequest())
+            ->first();
     }
 
     /**
+     * @deprecated Use the ResourceTransformer directly
      * @param Context $context
      * @param null $resourceDefinition
      * @return \CatLab\Charon\Interfaces\ResourceCollection

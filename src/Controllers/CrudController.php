@@ -11,6 +11,7 @@ use CatLab\Charon\Interfaces\ResourceDefinition;
 use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
+use CatLab\Charon\Laravel\ResourceTransformer;
 use CatLab\Charon\Models\CurrentPath;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Laravel\Contracts\Response as ResponseContract;
@@ -40,11 +41,9 @@ trait CrudController
 
     abstract function getContext($action = Action::VIEW, $parameters = []) : Context;
     abstract function getResourceDefinition(): ResourceDefinition;
+    abstract function getResourceTransformer(): ResourceTransformer;
 
     abstract function getResources($queryBuilder, Context $context, $resourceDefinition = null);
-
-    abstract function bodyToResource(Context $context, $resourceDefinition = null) : RESTResource;
-    abstract function bodyToResources(Context $context, $resourceDefinition = null) : ResourceCollection;
 
     abstract function getValidationErrorResponse(ResourceValidationException $e);
     abstract function notFound($id, $resource);
@@ -146,7 +145,11 @@ trait CrudController
         $this->authorizeCreate($request);
 
         $writeContext = $this->getContext(Action::CREATE);
-        $inputResources = $this->bodyToResources($writeContext);
+        $inputResources = $this->resourceTransformer->fromInput(
+            $this->getResourceDefinition(),
+            $writeContext,
+            $request
+        );
 
         // first validate all resources
         foreach ($inputResources as $inputResource) {
@@ -212,10 +215,14 @@ trait CrudController
         $this->authorizeEdit($request, $entity);
 
         // Fetch the entities resourcedefinition
-        $resourceDefinition = $this->resourceTransformer->getResourceDefinition($this->resourceDefinition, $entity);
+        $resourceDefinition = $this->getResourceTransformer()
+            ->getResourceDefinition($this->getResourceDefinition(), $entity);
 
         $writeContext = $this->getContext(Action::EDIT);
-        $inputResource = $this->bodyToResource($writeContext, $resourceDefinition);
+
+        $inputResource = $this->getResourceTransformer()
+            ->fromInput($resourceDefinition, $writeContext)
+            ->first();
 
         try {
             $inputResource->validate($writeContext, $entity);
@@ -253,8 +260,11 @@ trait CrudController
 
         $this->authorizeEdit($request, $entity);
 
+        $resourceDefinition = $this->getResourceTransformer()
+            ->getResourceDefinition($this->getResourceDefinition(), $entity);
+
         $writeContext = $this->getContext(Action::EDIT);
-        $inputResource = $this->bodyToResource($writeContext);
+        $inputResource = $this->getResourceTransformer()->fromInput($resourceDefinition, $writeContext);
 
         try {
             return $this->processPatchResource($request, $entity, $inputResource, $writeContext);

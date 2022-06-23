@@ -390,7 +390,12 @@ trait JsonApiResourceController
         $this->authorizeCreate($request);
 
         $writeContext = $this->getContext(Action::EDIT);
-        $inputResources = $this->bodyToResources($writeContext);
+
+        $inputResources = $this->resourceTransformer->fromInput(
+            $this->getResourceDefinition(),
+            $writeContext,
+            $request
+        );
 
         $createdResources = new ResourceCollection();
         $includedResources = new ResourceCollection();
