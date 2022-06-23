@@ -92,6 +92,8 @@ trait JsonApiResourceController
             $options
         );
 
+        $maxExpandDepth = $options[RouteCollection::OPTIONS_MAX_EXPAND_DEPTH] ?? 2;
+
         // we need to create a ResourceDefinition object to create the 'linkable' endpoints
         $resourceDefinitionObject = $resourceDefinitionFactory->getDefault();
         foreach ($resourceDefinitionObject->getFields()->getRelationships() as $field)  {
@@ -107,7 +109,8 @@ trait JsonApiResourceController
                     return 'Batch update multiple ' . $entityName;
                 })
                 ->parameters()->resource($resourceDefinitionObject)->many()->required()
-                ->returns()->statusCode(200)->many($resourceDefinitionFactory->getDefault());
+                ->returns()->statusCode(200)->many($resourceDefinitionFactory->getDefault())
+                ->maxExpandDepth($maxExpandDepth);
         }
 
         return $childResource;
@@ -131,7 +134,9 @@ trait JsonApiResourceController
         $controller = null,
         $options = null
     ) {
-        $resourceDefinitionFactory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($field->getResourceDefinition());
+        $resourceDefinitionFactory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($field->getChildResourceDefinition());
+
+        $maxExpandDepth = $options[RouteCollection::OPTIONS_MAX_EXPAND_DEPTH] ?? 2;
 
         $only = $options[RouteCollection::OPTIONS_ONLY_INCLUDE_METHODS] ?? [
             RouteCollection::OPTIONS_METHOD_VIEW,
@@ -152,7 +157,8 @@ trait JsonApiResourceController
                     }
                 })
                 ->parameters()->path($resourceId)->string()->required()
-                ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
+                ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault())
+                ->maxExpandDepth($maxExpandDepth);
         }
 
         if ($field->canCreateNewChildren(new Context(Action::EDIT))) {
@@ -167,7 +173,8 @@ trait JsonApiResourceController
                     })
                     ->parameters()->path($resourceId)->string()->required()
                     ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
-                    ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
+                    ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault())
+                    ->maxExpandDepth($maxExpandDepth);
             }
 
         }
@@ -195,7 +202,8 @@ trait JsonApiResourceController
                 })
                 ->parameters()->path($resourceId)->string()->required()
                 ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)
-                ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
+                ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault())
+                ->maxExpandDepth($maxExpandDepth);
 
             // POST relationship
             if ($field->getCardinality() === Cardinality::MANY) {
@@ -208,7 +216,8 @@ trait JsonApiResourceController
                     })
                     ->parameters()->path($resourceId)->string()->required()
                     ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
-                    ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
+                    ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault())
+                    ->maxExpandDepth($maxExpandDepth);
             }
         }
 
@@ -225,7 +234,8 @@ trait JsonApiResourceController
                 })
                 ->parameters()->path($resourceId)->string()->required()
                 ->parameters()->resource(get_class($field->getChildResourceDefinition()))->setAction(Action::IDENTIFIER)->many()
-                ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault());
+                ->returns()->statusCode(200)->one($resourceDefinitionFactory->getDefault())
+                ->maxExpandDepth($maxExpandDepth);
         }
     }
 

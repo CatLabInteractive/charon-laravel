@@ -48,8 +48,8 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         if ($entities instanceof Relation) {
             // Clone to avoid setting multiple filters
             $entities = clone $entities;
-            foreach ($identifiers as $k => $v) {
-                $entities->where($this->getQualifiedName($k), $v->getValue());
+            foreach ($identifiers as $v) {
+                $entities->where($this->getQualifiedName($v), $v->getValue());
             }
 
             $entity = $entities->get()->first();
