@@ -415,19 +415,24 @@ trait CrudController
      * @param Request $request
      * @param \Illuminate\Database\Eloquent\Model $entity
      * @return \Illuminate\Database\Eloquent\Model
+     * @throws \Throwable
      */
     protected function saveEntity(Request $request, \Illuminate\Database\Eloquent\Model $entity)
     {
-        $isNew = !$entity->exists;
+        \DB::transaction(function() use ($request, &$entity) {
 
-        $entity = $this->beforeSaveEntity($request, $entity, $isNew);
-        if ($entity instanceof Model) {
-            $entity->saveRecursively();
-        } else {
-            $entity->save();
-        }
+            $isNew = !$entity->exists;
 
-        $entity = $this->afterSaveEntity($request, $entity, $isNew);
+            $entity = $this->beforeSaveEntity($request, $entity, $isNew);
+            if ($entity instanceof Model) {
+                $entity->saveRecursively();
+            } else {
+                $entity->save();
+            }
+
+            $entity = $this->afterSaveEntity($request, $entity, $isNew);
+
+        });
 
         return $entity;
     }
