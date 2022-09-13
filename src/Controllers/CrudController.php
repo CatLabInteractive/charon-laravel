@@ -172,7 +172,11 @@ trait CrudController
             $entity = $this->toEntity($inputResource, $writeContext);
 
             // Save the entity
-            $entity = $this->saveEntity($request, $entity);
+            try {
+                $entity = $this->saveEntity($request, $entity);
+            } catch (ResourceValidationException $e) {
+                return $this->getValidationErrorResponse($e);
+            }
 
             $createdResources->add($this->toResource($entity, $readContext));
         }
@@ -221,7 +225,7 @@ trait CrudController
         $writeContext = $this->getContext(Action::EDIT);
 
         $inputResource = $this->getResourceTransformer()
-            ->fromInput($resourceDefinition, $writeContext)
+            ->fromInput($resourceDefinition, $writeContext, $request)
             ->first();
 
         try {
@@ -233,7 +237,13 @@ trait CrudController
         $entity = $this->toEntity($inputResource, $writeContext, $entity);
 
         // Save the entity
-        $entity = $this->saveEntity($request, $entity);
+        //$entity = $this->saveEntity($request, $entity);
+        // Save the entity
+        try {
+            $entity = $this->saveEntity($request, $entity);
+        } catch (ResourceValidationException $e) {
+            return $this->getValidationErrorResponse($e);
+        }
 
         // Turn back into a resource
         return $this->createViewEntityResponse($entity);
@@ -264,7 +274,7 @@ trait CrudController
             ->getResourceDefinition($this->getResourceDefinition(), $entity);
 
         $writeContext = $this->getContext(Action::EDIT);
-        $inputResource = $this->getResourceTransformer()->fromInput($resourceDefinition, $writeContext);
+        $inputResource = $this->getResourceTransformer()->fromInput($resourceDefinition, $writeContext, $request);
 
         try {
             return $this->processPatchResource($request, $entity, $inputResource, $writeContext);
@@ -294,7 +304,13 @@ trait CrudController
         $entity = $this->toEntity($inputResource, $writeContext, $entity);
 
         // Save the entity
-        $entity = $this->saveEntity($request, $entity);
+        //$entity = $this->saveEntity($request, $entity);
+        // Save the entity
+        try {
+            $entity = $this->saveEntity($request, $entity);
+        } catch (ResourceValidationException $e) {
+            return $this->getValidationErrorResponse($e);
+        }
 
         // Turn back into a resource
         return $this->createViewEntityResponse($entity);
@@ -324,6 +340,13 @@ trait CrudController
      *
      * @param $entity
      * @return ResourceResponse
+     * @throws \CatLab\Charon\Exceptions\InvalidContextAction
+     * @throws \CatLab\Charon\Exceptions\InvalidEntityException
+     * @throws \CatLab\Charon\Exceptions\InvalidPropertyException
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
+     * @throws \CatLab\Charon\Exceptions\InvalidTransformer
+     * @throws \CatLab\Charon\Exceptions\IterableExpected
+     * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
     protected function createViewEntityResponse($entity)
     {
