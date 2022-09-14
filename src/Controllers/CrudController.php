@@ -8,6 +8,7 @@ use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Exceptions\ResourceException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
+use CatLab\Charon\Interfaces\ResourceDefinitionFactory;
 use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
@@ -40,7 +41,7 @@ trait CrudController
     abstract function getResourceResponse($data, Context $context  = null): ResponseContract;
 
     abstract function getContext($action = Action::VIEW, $parameters = []) : Context;
-    abstract function getResourceDefinition(): ResourceDefinition;
+    abstract function getResourceDefinitionFactory(): ResourceDefinitionFactory;
     abstract function getResourceTransformer(): ResourceTransformer;
 
     abstract function getResources($queryBuilder, Context $context, $resourceDefinition = null);
@@ -146,7 +147,7 @@ trait CrudController
 
         $writeContext = $this->getContext(Action::CREATE);
         $inputResources = $this->resourceTransformer->fromInput(
-            $this->getResourceDefinition(),
+            $this->getResourceDefinitionFactory(),
             $writeContext,
             $request
         );
@@ -220,7 +221,7 @@ trait CrudController
 
         // Fetch the entities resourcedefinition
         $resourceDefinition = $this->getResourceTransformer()
-            ->getResourceDefinition($this->getResourceDefinition(), $entity);
+            ->getResourceDefinition($this->getResourceDefinitionFactory(), $entity);
 
         $writeContext = $this->getContext(Action::EDIT);
 
@@ -271,7 +272,7 @@ trait CrudController
         $this->authorizeEdit($request, $entity);
 
         $resourceDefinition = $this->getResourceTransformer()
-            ->getResourceDefinition($this->getResourceDefinition(), $entity);
+            ->getResourceDefinition($this->getResourceDefinitionFactory(), $entity);
 
         $writeContext = $this->getContext(Action::EDIT);
         $inputResource = $this->getResourceTransformer()->fromInput($resourceDefinition, $writeContext, $request);
@@ -358,10 +359,11 @@ trait CrudController
 
     /**
      * @return string
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     protected function getEntityClassName()
     {
-        return $this->getResourceDefinition()->getEntityClassName();
+        return $this->getResourceDefinitionFactory()->getDefault()->getEntityClassName();
     }
 
     /**

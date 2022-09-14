@@ -7,6 +7,7 @@ use CatLab\Charon\Collections\FilterCollection;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Enums\Action;
 use CatLab\Charon\Factories\ResourceFactory;
+use CatLab\Charon\Interfaces\ResourceDefinitionFactory;
 use CatLab\Charon\Laravel\Factories\AuthorizedEntityFactory;
 use CatLab\Charon\Laravel\Factories\EntityFactory;
 use CatLab\Charon\Laravel\Models\ModelFilterResults;
@@ -156,13 +157,11 @@ trait ResourceController
     }
 
     /**
-     * @return ResourceDefinitionContract
-     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
+     * @return ResourceDefinitionFactory
      */
-    public function getResourceDefinition(): ResourceDefinitionContract
+    public function getResourceDefinitionFactory(): ResourceDefinitionFactory
     {
-        $factory = StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($this->resourceDefinition);
-        return $factory->getDefault();
+        return StaticResourceDefinitionFactory::getFactoryOrDefaultFactory($this->resourceDefinition);
     }
 
     /**

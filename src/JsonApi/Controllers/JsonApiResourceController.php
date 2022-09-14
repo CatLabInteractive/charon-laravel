@@ -259,7 +259,7 @@ trait JsonApiResourceController
             throw EntityNotFoundException::makeTranslatable('Could not find entity with id %s', [ $entity->id ]);
         }
 
-        $field = $this->getResourceDefinition()->getFields()->getFromDisplayName($relationshipDisplayName);
+        $field = $this->getResourceDefinitionFactory()->getDefault()->getFields()->getFromDisplayName($relationshipDisplayName);
         if (!$field instanceof RelationshipField) {
             throw new \InvalidArgumentException('Only relationships can be viewed using this method.');
         }
@@ -402,7 +402,7 @@ trait JsonApiResourceController
         $writeContext = $this->getContext(Action::EDIT);
 
         $inputResources = $this->resourceTransformer->fromInput(
-            $this->getResourceDefinition(),
+            $this->getResourceDefinitionFactory(),
             $writeContext,
             $request
         );
@@ -568,13 +568,14 @@ trait JsonApiResourceController
      * @param string $action
      * @param array $parameters
      * @return Context|string
+     * @throws \CatLab\Charon\Exceptions\InvalidResourceDefinition
      */
     protected function getContext($action = Action::VIEW, $parameters = []): \CatLab\Charon\Interfaces\Context
     {
         $context = $this->createContext($action, $parameters);
 
         if ($toShow = Request::query('fields')) {
-            $resourceDefinition = $this->getResourceDefinition();
+            $resourceDefinition = $this->getResourceDefinitionFactory()->getDefault();
             if (!is_array($toShow)) {
                 $toShow = [ $resourceDefinition->getType() => $toShow ];
             }
