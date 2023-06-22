@@ -67,7 +67,7 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
      *
      * @return Response
      */
-    public function sendContent()
+    public function sendContent(): static
     {
         echo $this->getContent();
         return $this;
@@ -76,7 +76,7 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
     /**
      * @return false|string
      */
-    public function getContent()
+    public function getContent(): false|string
     {
         if (!isset($this->output)) {
             $this->output = $this->encode();
