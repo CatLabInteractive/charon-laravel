@@ -70,6 +70,7 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
     public function sendContent(): static
     {
         echo $this->getContent();
+
         return $this;
     }
 

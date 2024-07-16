@@ -32,8 +32,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
-use Request;
-use Response;
+use CatLab\Laravel\Database\SelectQueryTransformer;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * Class ResourceController
@@ -509,5 +510,98 @@ trait ResourceController
     protected function createEntityFactory()
     {
         return new EntityFactory();
+    }
+
+    /**
+     * Output a resource or a collection of resources
+     *
+     * @param $models
+     * @param array $parameters
+     * @param null $resourceDefinition
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function outputList($models, array $parameters = [], $resourceDefinition = null)
+    {
+        $resources = $this->filteredModelsToResources($models, $parameters, $resourceDefinition);
+        return $this->toResponse($resources);
+    }
+
+
+    /**
+     * @param $models
+     * @param array $parameters
+     * @param null $resourceDefinition
+     * @return array|\mixed[]
+     */
+    protected function filteredModelsToResources($models, array $parameters = [], $resourceDefinition = null)
+    {
+        $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
+        $context = $this->getContext(Action::INDEX, $parameters);
+
+        $models = $this->filterAndGet(
+            $models,
+            $resourceDefinition,
+            $context,
+            $this->getRecordLimit()
+        );
+
+        return $this->modelsToResources($models, $context, $resourceDefinition);
+    }
+
+    /**
+     * @deprecated Use getModels()
+     * @param $model
+     * @param $resourceDefinition
+     * @param Context $context
+     * @param int $records
+     * @return mixed
+     */
+    public function filterAndGet($model, $resourceDefinition, Context $context, $records = null)
+    {
+        if (!isset($records)) {
+            $records = $this->getRecordLimit();
+        }
+
+        $filter = $this->resourceTransformer->getFilters(
+            Request::query(),
+            $resourceDefinition,
+            $context,
+            $records
+        );
+
+        // Translate parameters to larevel query
+        $selectQueryTransformer = new SelectQueryTransformer();
+        $selectQueryTransformer->toLaravel($model, $filter);
+
+        // Process eager loading
+        $this->resourceTransformer->processEagerLoading($model, $resourceDefinition, $context);
+
+        if (
+            $model instanceof Builder ||
+            $model instanceof Relation
+        ) {
+            $models = $model->get();
+        } else {
+            $models = $model;
+        }
+
+        if ($filter->isReverse()) {
+            $models = $models->reverse();
+        }
+
+        return $models;
+    }
+
+
+    /**
+     * @return int
+     */
+    protected function getRecordLimit()
+    {
+        $records = Request::input('records', 10);
+        if (!is_numeric($records)) {
+            $records = 10;
+        }
+        return $records;
     }
 }
