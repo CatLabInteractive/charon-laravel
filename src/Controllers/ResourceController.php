@@ -35,6 +35,7 @@ use Illuminate\Http\JsonResponse;
 use CatLab\Laravel\Database\SelectQueryTransformer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Request as RequestFacade;
 
 /**
  * Class ResourceController
@@ -442,7 +443,7 @@ trait ResourceController
         if ($data instanceof SerializableResource) {
             return new ResourceResponse($data, $context);
         } else {
-            return JsonResponse::create($this->resourceToArray($data));
+            return response()->json($this->resourceToArray($data));
         }
     }
 
@@ -483,9 +484,9 @@ trait ResourceController
     protected function getRequest()
     {
         if (method_exists(\Illuminate\Http\Request::class, 'instance')) {
-            return Request::instance();
+            return RequestFacade::instance();
         } else {
-            return Request::getInstance();
+            return RequestFacade::getInstance();
         }
     }
 
@@ -538,70 +539,10 @@ trait ResourceController
         $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
         $context = $this->getContext(Action::INDEX, $parameters);
 
-        $models = $this->filterAndGet(
+        return $this->getResources(
             $models,
-            $resourceDefinition,
             $context,
-            $this->getRecordLimit()
+            $this->resourceDefinition,
         );
-
-        return $this->modelsToResources($models, $context, $resourceDefinition);
-    }
-
-    /**
-     * @deprecated Use getModels()
-     * @param $model
-     * @param $resourceDefinition
-     * @param Context $context
-     * @param int $records
-     * @return mixed
-     */
-    public function filterAndGet($model, $resourceDefinition, Context $context, $records = null)
-    {
-        if (!isset($records)) {
-            $records = $this->getRecordLimit();
-        }
-
-        $filter = $this->resourceTransformer->getFilters(
-            Request::query(),
-            $resourceDefinition,
-            $context,
-            $records
-        );
-
-        // Translate parameters to larevel query
-        $selectQueryTransformer = new SelectQueryTransformer();
-        $selectQueryTransformer->toLaravel($model, $filter);
-
-        // Process eager loading
-        $this->resourceTransformer->processEagerLoading($model, $resourceDefinition, $context);
-
-        if (
-            $model instanceof Builder ||
-            $model instanceof Relation
-        ) {
-            $models = $model->get();
-        } else {
-            $models = $model;
-        }
-
-        if ($filter->isReverse()) {
-            $models = $models->reverse();
-        }
-
-        return $models;
-    }
-
-
-    /**
-     * @return int
-     */
-    protected function getRecordLimit()
-    {
-        $records = Request::input('records', 10);
-        if (!is_numeric($records)) {
-            $records = 10;
-        }
-        return $records;
     }
 }
