@@ -542,7 +542,7 @@ trait ResourceController
         return $this->getResources(
             $models,
             $context,
-            $this->resourceDefinition,
+            $resourceDefinition,
         );
     }
 }
