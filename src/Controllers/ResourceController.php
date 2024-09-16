@@ -441,7 +441,7 @@ trait ResourceController
         if ($data instanceof SerializableResource) {
             return new ResourceResponse($data, $context);
         } else {
-            return JsonResponse::create($this->resourceToArray($data));
+            return new JsonResponse($this->resourceToArray($data));
         }
     }
 
