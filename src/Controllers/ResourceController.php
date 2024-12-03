@@ -32,8 +32,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
-use Request;
-use Response;
+use CatLab\Laravel\Database\SelectQueryTransformer;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Request as RequestFacade;
 
 /**
  * Class ResourceController
@@ -482,9 +484,9 @@ trait ResourceController
     protected function getRequest()
     {
         if (method_exists(\Illuminate\Http\Request::class, 'instance')) {
-            return Request::instance();
+            return RequestFacade::instance();
         } else {
-            return Request::getInstance();
+            return RequestFacade::getInstance();
         }
     }
 
@@ -509,5 +511,38 @@ trait ResourceController
     protected function createEntityFactory()
     {
         return new EntityFactory();
+    }
+
+    /**
+     * Output a resource or a collection of resources
+     *
+     * @param $models
+     * @param array $parameters
+     * @param null $resourceDefinition
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function outputList($models, array $parameters = [], $resourceDefinition = null)
+    {
+        $resources = $this->filteredModelsToResources($models, $parameters, $resourceDefinition);
+        return $this->toResponse($resources);
+    }
+
+
+    /**
+     * @param $models
+     * @param array $parameters
+     * @param null $resourceDefinition
+     * @return array|\mixed[]
+     */
+    protected function filteredModelsToResources($models, array $parameters = [], $resourceDefinition = null)
+    {
+        $resourceDefinition = $resourceDefinition ?? $this->resourceDefinition;
+        $context = $this->getContext(Action::INDEX, $parameters);
+
+        return $this->getResources(
+            $models,
+            $context,
+            $resourceDefinition,
+        );
     }
 }

@@ -179,7 +179,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
         RelationshipField $field,
         array $identifiers,
         Context $context
-    ) {
+    ): void {
         list ($entity, $name, $parameters) = $this->resolvePath($transformer, $entity, $field, $context);
         $existingChildren = $this->getValueFromEntity($entity, $name, $parameters, $context);
 
@@ -215,7 +215,7 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
             }
 
         } else {
-            return parent::removeAllChildrenExcept(
+            parent::removeAllChildrenExcept(
                 $transformer,
                 $propertyResolver,
                 $entity,
