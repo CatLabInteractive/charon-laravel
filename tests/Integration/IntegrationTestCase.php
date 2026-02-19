@@ -31,6 +31,8 @@ abstract class IntegrationTestCase extends OrchestraTestCase
 
     protected function defineDatabaseMigrations()
     {
+        $this->dropTables();
+
         Schema::create('stores', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -60,6 +62,20 @@ abstract class IntegrationTestCase extends OrchestraTestCase
             $table->foreignId('tag_id')->constrained('tags')->onDelete('cascade');
             $table->timestamps();
         });
+
+        $this->beforeApplicationDestroyed(function () {
+            $this->dropTables();
+        });
+    }
+
+    private function dropTables()
+    {
+        Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('tag_metadata');
+        Schema::dropIfExists('tags');
+        Schema::dropIfExists('pets');
+        Schema::dropIfExists('stores');
+        Schema::enableForeignKeyConstraints();
     }
 
     protected function defineRoutes($router)
