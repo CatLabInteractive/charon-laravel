@@ -275,7 +275,8 @@ trait CrudController
             ->getResourceDefinition($this->getResourceDefinitionFactory(), $entity);
 
         $writeContext = $this->getContext(Action::EDIT);
-        $inputResource = $this->getResourceTransformer()->fromInput($resourceDefinition, $writeContext, $request);
+        $inputResource = $this->getResourceTransformer()->fromInput($resourceDefinition, $writeContext, $request)
+            ->first();
 
         try {
             return $this->processPatchResource($request, $entity, $inputResource, $writeContext);
