@@ -1,7 +1,7 @@
 {
     "name": "catlabinteractive/charon-laravel",
     "description": "Laravel specific libraries for Charon.",
-    "version": "1.7.4",
+    "version": "1.8.0",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -16,7 +16,7 @@
         }
     },
     "require": {
-        "catlabinteractive/charon": "dev-master"
+        "catlabinteractive/charon": "^1.8.0"
     },
     "require-dev": {
         "laravel/framework": "^9.0",
