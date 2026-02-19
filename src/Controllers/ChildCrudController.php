@@ -112,8 +112,15 @@ trait ChildCrudController
     {
         $this->request = $request;
 
-        $items = $request->json('items', []);
-        if (!is_array($items) || empty($items)) {
+        $context = $this->getContext(Action::IDENTIFIER);
+
+        try {
+            $identifiers = $this->getResourceTransformer()->identifiersFromInput(
+                $this->getResourceDefinitionFactory(),
+                $context,
+                $request
+            );
+        } catch (\InvalidArgumentException $e) {
             return $this->toResponse([
                 'error' => [
                     'message' => 'No IDs provided for bulk delete.'
@@ -121,15 +128,25 @@ trait ChildCrudController
             ])->setStatusCode(400);
         }
 
-        $relationship = $this->getRelationship($request);
-        $ids = array_map(function ($item) {
-            return is_array($item) ? ($item['id'] ?? null) : $item;
-        }, $items);
-        $ids = array_filter($ids, function ($id) {
-            return $id !== null;
-        });
+        if ($identifiers->count() === 0) {
+            return $this->toResponse([
+                'error' => [
+                    'message' => 'No IDs provided for bulk delete.'
+                ]
+            ])->setStatusCode(400);
+        }
 
-        $entities = $relationship->whereIn('id', $ids)->get();
+        $ids = [];
+        foreach ($identifiers as $identifier) {
+            $identifierValues = $identifier->getIdentifiers()->toMap();
+            $id = $identifierValues[$this->getIdParameter()] ?? null;
+            if ($id !== null) {
+                $ids[] = $id;
+            }
+        }
+
+        $relationship = $this->getRelationship($request);
+        $entities = $relationship->whereIn($this->getIdParameter(), $ids)->get();
 
         $deletedCount = 0;
         foreach ($entities as $entity) {

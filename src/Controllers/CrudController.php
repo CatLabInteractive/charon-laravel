@@ -152,11 +152,6 @@ trait CrudController
             $request
         );
 
-        // If the X-Bulk-Request header is set, mark the response as bulk
-        if ($request->header('X-Bulk-Request') == '1') {
-            $inputResources->addMeta('bulk', true);
-        }
-
         // first validate all resources
         foreach ($inputResources as $inputResource) {
             try {
@@ -352,8 +347,23 @@ trait CrudController
     {
         $this->request = $request;
 
-        $items = $request->json('items', []);
-        if (!is_array($items) || empty($items)) {
+        $context = $this->getContext(Action::IDENTIFIER);
+
+        try {
+            $identifiers = $this->getResourceTransformer()->identifiersFromInput(
+                $this->getResourceDefinitionFactory(),
+                $context,
+                $request
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->toResponse([
+                'error' => [
+                    'message' => 'No IDs provided for bulk delete.'
+                ]
+            ])->setStatusCode(400);
+        }
+
+        if ($identifiers->count() === 0) {
             return $this->toResponse([
                 'error' => [
                     'message' => 'No IDs provided for bulk delete.'
@@ -362,8 +372,9 @@ trait CrudController
         }
 
         $deletedCount = 0;
-        foreach ($items as $item) {
-            $id = is_array($item) ? ($item['id'] ?? null) : $item;
+        foreach ($identifiers as $identifier) {
+            $identifierValues = $identifier->getIdentifiers()->toMap();
+            $id = $identifierValues[$this->getIdParameter()] ?? null;
             if ($id === null) {
                 continue;
             }
