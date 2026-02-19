@@ -123,7 +123,7 @@ trait ChildCrudController
         } catch (\InvalidArgumentException $e) {
             return $this->toResponse([
                 'error' => [
-                    'message' => 'No IDs provided for bulk delete.'
+                    'message' => $e->getMessage()
                 ]
             ])->setStatusCode(400);
         }
