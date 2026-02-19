@@ -152,6 +152,11 @@ trait CrudController
             $request
         );
 
+        // If the X-Bulk-Request header is set, mark the response as bulk
+        if ($request->header('X-Bulk-Request') == '1') {
+            $inputResources->addMeta('bulk', true);
+        }
+
         // first validate all resources
         foreach ($inputResources as $inputResource) {
             try {
@@ -334,6 +339,46 @@ trait CrudController
         return $this->toResponse([
             'success' => true,
             'message' => 'Successfully deleted entity.'
+        ]);
+    }
+
+    /**
+     * Bulk delete entities by IDs.
+     * @param Request $request
+     * @return Response
+     * @throws AuthorizationException
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $this->request = $request;
+
+        $items = $request->json('items', []);
+        if (!is_array($items) || empty($items)) {
+            return $this->toResponse([
+                'error' => [
+                    'message' => 'No IDs provided for bulk delete.'
+                ]
+            ])->setStatusCode(400);
+        }
+
+        $deletedCount = 0;
+        foreach ($items as $item) {
+            $id = is_array($item) ? ($item['id'] ?? null) : $item;
+            if ($id === null) {
+                continue;
+            }
+
+            $entity = $this->callEntityMethod($request, 'find', $id);
+            if ($entity) {
+                $this->authorizeDestroy($request, $entity);
+                $entity->delete();
+                $deletedCount++;
+            }
+        }
+
+        return $this->toResponse([
+            'success' => true,
+            'deleted' => $deletedCount
         ]);
     }
 

@@ -101,4 +101,46 @@ trait ChildCrudController
     {
         $this->authorizeCrudRequest(Action::CREATE, null, $this->getParent($request));
     }
+
+    /**
+     * Bulk delete child entities by IDs.
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $this->request = $request;
+
+        $items = $request->json('items', []);
+        if (!is_array($items) || empty($items)) {
+            return $this->toResponse([
+                'error' => [
+                    'message' => 'No IDs provided for bulk delete.'
+                ]
+            ])->setStatusCode(400);
+        }
+
+        $relationship = $this->getRelationship($request);
+        $ids = array_map(function ($item) {
+            return is_array($item) ? ($item['id'] ?? null) : $item;
+        }, $items);
+        $ids = array_filter($ids, function ($id) {
+            return $id !== null;
+        });
+
+        $entities = $relationship->whereIn('id', $ids)->get();
+
+        $deletedCount = 0;
+        foreach ($entities as $entity) {
+            $this->authorizeDestroy($request, $entity);
+            $entity->delete();
+            $deletedCount++;
+        }
+
+        return $this->toResponse([
+            'success' => true,
+            'deleted' => $deletedCount
+        ]);
+    }
 }
