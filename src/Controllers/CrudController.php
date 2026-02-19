@@ -338,6 +338,62 @@ trait CrudController
     }
 
     /**
+     * Bulk delete entities by IDs.
+     * @param Request $request
+     * @return Response
+     * @throws AuthorizationException
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $this->request = $request;
+
+        $context = $this->getContext(Action::IDENTIFIER);
+
+        try {
+            $identifiers = $this->getResourceTransformer()->identifiersFromInput(
+                $this->getResourceDefinitionFactory(),
+                $context,
+                $request
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->toResponse([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ])->setStatusCode(400);
+        }
+
+        if ($identifiers->count() === 0) {
+            return $this->toResponse([
+                'error' => [
+                    'message' => 'No IDs provided for bulk delete.'
+                ]
+            ])->setStatusCode(400);
+        }
+
+        $deletedCount = 0;
+        foreach ($identifiers as $identifier) {
+            $identifierValues = $identifier->getIdentifiers()->toMap();
+            $id = $identifierValues[$this->getIdParameter()] ?? null;
+            if ($id === null) {
+                continue;
+            }
+
+            $entity = $this->callEntityMethod($request, 'find', $id);
+            if ($entity) {
+                $this->authorizeDestroy($request, $entity);
+                $entity->delete();
+                $deletedCount++;
+            }
+        }
+
+        return $this->toResponse([
+            'success' => true,
+            'deleted' => $deletedCount
+        ]);
+    }
+
+    /**
      *
      * @param $entity
      * @return ResourceResponse

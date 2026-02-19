@@ -101,4 +101,63 @@ trait ChildCrudController
     {
         $this->authorizeCrudRequest(Action::CREATE, null, $this->getParent($request));
     }
+
+    /**
+     * Bulk delete child entities by IDs.
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $this->request = $request;
+
+        $context = $this->getContext(Action::IDENTIFIER);
+
+        try {
+            $identifiers = $this->getResourceTransformer()->identifiersFromInput(
+                $this->getResourceDefinitionFactory(),
+                $context,
+                $request
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->toResponse([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ])->setStatusCode(400);
+        }
+
+        if ($identifiers->count() === 0) {
+            return $this->toResponse([
+                'error' => [
+                    'message' => 'No IDs provided for bulk delete.'
+                ]
+            ])->setStatusCode(400);
+        }
+
+        $ids = [];
+        foreach ($identifiers as $identifier) {
+            $identifierValues = $identifier->getIdentifiers()->toMap();
+            $id = $identifierValues[$this->getIdParameter()] ?? null;
+            if ($id !== null) {
+                $ids[] = $id;
+            }
+        }
+
+        $relationship = $this->getRelationship($request);
+        $entities = $relationship->whereIn($this->getIdParameter(), $ids)->get();
+
+        $deletedCount = 0;
+        foreach ($entities as $entity) {
+            $this->authorizeDestroy($request, $entity);
+            $entity->delete();
+            $deletedCount++;
+        }
+
+        return $this->toResponse([
+            'success' => true,
+            'deleted' => $deletedCount
+        ]);
+    }
 }

@@ -12,7 +12,7 @@ class MockPropertyResolver extends \CatLab\Charon\Resolvers\PropertyResolver
      * @param string $path
      * @return mixed
      */
-    public function splitPathParameters(string $path)
+    public function splitPathParameters(string $path): array
     {
         return parent::splitPathParameters($path);
     }
