@@ -33,5 +33,13 @@
                 "CatLab\\Charon\\Laravel\\RESTResourceProvider"
             ]
         }
+    },
+    "config": {
+        "allow-plugins": {
+            "*": true
+        },
+        "audit": {
+            "block-insecure": false
+        }
     }
 }
