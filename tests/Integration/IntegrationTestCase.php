@@ -31,6 +31,13 @@ abstract class IntegrationTestCase extends OrchestraTestCase
 
     protected function defineDatabaseMigrations()
     {
+        $this->beforeApplicationDestroyed(function () {
+            $this->dropTables();
+        });
+    }
+
+    protected function afterRefreshingDatabase()
+    {
         $this->dropTables();
 
         Schema::create('stores', function (Blueprint $table) {
@@ -61,10 +68,6 @@ abstract class IntegrationTestCase extends OrchestraTestCase
             $table->string('value')->nullable();
             $table->foreignId('tag_id')->constrained('tags')->onDelete('cascade');
             $table->timestamps();
-        });
-
-        $this->beforeApplicationDestroyed(function () {
-            $this->dropTables();
         });
     }
 
