@@ -32,7 +32,7 @@ class PaginationProcessor extends \CatLab\Charon\Processors\PaginationProcessor
         FilterResults $filterResults = null,
         RelationshipValue $parent = null,
         $parentEntity = null
-    ) {
+    ): void {
         list ($url, $cursor) = $this->prepareCursor(
             $transformer,
             $collection,
