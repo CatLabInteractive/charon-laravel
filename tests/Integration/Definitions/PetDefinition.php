@@ -30,6 +30,7 @@ class PetDefinition extends ResourceDefinition
                 ->one()
                 ->visible(true, true)
                 ->expandable()
+                ->linkable()
 
             ->relationship('tags', TagDefinition::class)
                 ->many()
