@@ -309,8 +309,8 @@ trait ResourceController
      */
     protected function applyGlobalFilters(
         $queryBuilder,
-        ResourceDefinitionContract $resourceDefinition = null,
-        Context $context = null
+        ?ResourceDefinitionContract $resourceDefinition = null,
+        ?Context $context = null
     ) {
 
     }
@@ -438,7 +438,7 @@ trait ResourceController
      * @param Context|null $context
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    protected function toResponse($data, Context $context = null)
+    protected function toResponse($data, ?Context $context = null)
     {
         if ($data instanceof SerializableResource) {
             return new ResourceResponse($data, $context);
@@ -452,7 +452,7 @@ trait ResourceController
      * @param Context|null $context
      * @return ResourceResponse
      */
-    protected function getResourceResponse($data, Context $context  = null): ResponseContract
+    protected function getResourceResponse($data, ?Context $context  = null): ResponseContract
     {
         return new ResourceResponse($data, $context);
     }

@@ -38,7 +38,7 @@ trait CrudController
      * Required methods
      */
 
-    abstract function getResourceResponse($data, Context $context  = null): ResponseContract;
+    abstract function getResourceResponse($data, ?Context $context  = null): ResponseContract;
 
     abstract function getContext($action = Action::VIEW, $parameters = []) : Context;
     abstract function getResourceDefinitionFactory(): ResourceDefinitionFactory;

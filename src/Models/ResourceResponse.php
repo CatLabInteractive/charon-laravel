@@ -42,7 +42,7 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
      */
     public function __construct(
         SerializableResource $resource,
-        Context $context = null,
+        ?Context $context = null,
         $status = 200,
         $headers = []
     ) {

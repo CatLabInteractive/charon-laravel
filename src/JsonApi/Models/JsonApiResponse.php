@@ -36,7 +36,7 @@ class JsonApiResponse extends ResourceResponse
      */
     private $included = [];
 
-    public function __construct(SerializableResource $resource, Context $context = null, $status = 200, $headers = [])
+    public function __construct(SerializableResource $resource, ?Context $context = null, $status = 200, $headers = [])
     {
         $headers['Content-type'] = 'application/vnd.api+json';
         parent::__construct($resource, $context, $status, $headers);

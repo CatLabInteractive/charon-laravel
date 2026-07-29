@@ -96,7 +96,7 @@ class CharonErrorHandler
      */
     public function jsonApiErrorResponse(
         string $message,
-        string $detailMessage = null,
+        ?string $detailMessage = null,
         array $detailParameters = [],
         int $status = 500
     ) {

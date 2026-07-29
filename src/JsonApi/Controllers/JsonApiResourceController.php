@@ -483,7 +483,7 @@ trait JsonApiResourceController
      * @param \CatLab\Charon\Interfaces\Context|null $context
      * @return ResourceResponse
      */
-    protected function getResourceResponse($data, \CatLab\Charon\Interfaces\Context $context  = null): ResponseContract
+    protected function getResourceResponse($data, ?\CatLab\Charon\Interfaces\Context $context  = null): ResponseContract
     {
         return new JsonApiResponse($data, $context);
     }
