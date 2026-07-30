@@ -52,6 +52,11 @@ abstract class IntegrationTestCase extends OrchestraTestCase
             $table->string('name');
             $table->string('status')->nullable();
             $table->foreignId('store_id')->nullable()->constrained('stores')->onDelete('cascade');
+            // Self-referencing linkable relationship (PetDefinition::linkedPet), used to
+            // exercise sibling-to-sibling client references ('$ref') in bulk writes. No
+            // FK constraint: the referenced pet may not exist yet when this row is first
+            // inserted (forward reference within the same batch).
+            $table->unsignedBigInteger('linked_pet_id')->nullable();
             $table->timestamps();
         });
 

@@ -5,15 +5,18 @@ namespace CatLab\Charon\Laravel\Controllers;
 use CatLab\Charon\Collections\FilterCollection;
 use CatLab\Charon\Collections\ResourceCollection;
 use CatLab\Charon\Enums\Action;
+use CatLab\Charon\Enums\Cardinality;
 use CatLab\Charon\Exceptions\ResourceException;
 use CatLab\Charon\Interfaces\Context;
 use CatLab\Charon\Interfaces\ResourceDefinition;
 use CatLab\Charon\Interfaces\ResourceDefinitionFactory;
 use CatLab\Charon\Laravel\Database\Model;
 use CatLab\Charon\Exceptions\EntityNotFoundException;
+use CatLab\Charon\Laravel\Exceptions\ClientReferenceException;
 use CatLab\Charon\Laravel\Models\ResourceResponse;
 use CatLab\Charon\Laravel\ResourceTransformer;
 use CatLab\Charon\Models\CurrentPath;
+use CatLab\Charon\Models\Properties\RelationshipField;
 use CatLab\Charon\Models\RESTResource;
 use CatLab\Charon\Laravel\Contracts\Response as ResponseContract;
 use CatLab\Requirements\Exceptions\RequirementValidationException;
@@ -168,17 +171,17 @@ trait CrudController
         $createdResources = new ResourceCollection();
         $readContext = $this->getContext(Action::VIEW);
 
-        // now save all resources
-        foreach ($inputResources as $inputResource) {
-            $entity = $this->toEntity($inputResource, $writeContext);
+        // Save all resources, and any client-reference ($ref) links between
+        // them, in a single transaction. See saveEntitiesWithClientReferences().
+        try {
+            $entities = $this->saveEntitiesWithClientReferences($request, $inputResources, $writeContext);
+        } catch (ClientReferenceException $e) {
+            return $this->getValidationErrorResponse($e)->setStatusCode(422);
+        } catch (ResourceValidationException $e) {
+            return $this->getValidationErrorResponse($e);
+        }
 
-            // Save the entity
-            try {
-                $entity = $this->saveEntity($request, $entity);
-            } catch (ResourceValidationException $e) {
-                return $this->getValidationErrorResponse($e);
-            }
-
+        foreach ($entities as $entity) {
             $createdResources->add($this->toResource($entity, $readContext));
         }
 
@@ -193,6 +196,11 @@ trait CrudController
         } else {
             // only take the first (and only) resource
             $response = $this->getResourceResponse($createdResources->first(), $readContext);
+        }
+
+        $refs = $this->getClientReferenceMapping($writeContext);
+        if ($refs !== []) {
+            $response->setMeta([ '$refs' => $refs ]);
         }
 
         $response->setStatusCode(201);
@@ -235,19 +243,19 @@ trait CrudController
             return $this->getValidationErrorResponse($e);
         }
 
-        $entity = $this->toEntity($inputResource, $writeContext, $entity);
-
-        // Save the entity
-        //$entity = $this->saveEntity($request, $entity);
-        // Save the entity
+        // Save the entity, and any client-reference ($ref) links resolved
+        // while converting it, in a single transaction. See
+        // saveEntitiesWithClientReferences().
         try {
-            $entity = $this->saveEntity($request, $entity);
+            [ $entity ] = $this->saveEntitiesWithClientReferences($request, [ $inputResource ], $writeContext, $entity);
+        } catch (ClientReferenceException $e) {
+            return $this->getValidationErrorResponse($e)->setStatusCode(422);
         } catch (ResourceValidationException $e) {
             return $this->getValidationErrorResponse($e);
         }
 
         // Turn back into a resource
-        return $this->createViewEntityResponse($entity);
+        return $this->createViewEntityResponse($entity, $this->getClientReferenceMapping($writeContext));
     }
 
     /**
@@ -303,19 +311,19 @@ trait CrudController
     ) {
         $inputResource->validate($writeContext, $entity, new CurrentPath(), false);
 
-        $entity = $this->toEntity($inputResource, $writeContext, $entity);
-
-        // Save the entity
-        //$entity = $this->saveEntity($request, $entity);
-        // Save the entity
+        // Save the entity, and any client-reference ($ref) links resolved
+        // while converting it, in a single transaction. See
+        // saveEntitiesWithClientReferences().
         try {
-            $entity = $this->saveEntity($request, $entity);
+            [ $entity ] = $this->saveEntitiesWithClientReferences($request, [ $inputResource ], $writeContext, $entity);
+        } catch (ClientReferenceException $e) {
+            return $this->getValidationErrorResponse($e)->setStatusCode(422);
         } catch (ResourceValidationException $e) {
             return $this->getValidationErrorResponse($e);
         }
 
         // Turn back into a resource
-        return $this->createViewEntityResponse($entity);
+        return $this->createViewEntityResponse($entity, $this->getClientReferenceMapping($writeContext));
     }
 
     /**
@@ -397,6 +405,8 @@ trait CrudController
     /**
      *
      * @param $entity
+     * @param array $refs Client-reference ($ref) -> primary key mapping to attach as
+     *                     response meta ("$refs"), if any refs were used in the request.
      * @return ResourceResponse
      * @throws \CatLab\Charon\Exceptions\InvalidContextAction
      * @throws \CatLab\Charon\Exceptions\InvalidEntityException
@@ -406,12 +416,149 @@ trait CrudController
      * @throws \CatLab\Charon\Exceptions\IterableExpected
      * @throws \CatLab\Charon\Exceptions\VariableNotFoundInContext
      */
-    protected function createViewEntityResponse($entity)
+    protected function createViewEntityResponse($entity, array $refs = [])
     {
         $readContext = $this->getContext(Action::VIEW);
         $resource = $this->toResource($entity, $readContext);
 
-        return $this->getResourceResponse($resource, $readContext);
+        $response = $this->getResourceResponse($resource, $readContext);
+
+        if ($refs !== []) {
+            $response->setMeta([ '$refs' => $refs ]);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Convert every $inputResources item into an entity and save it, then
+     * apply any client-reference ($ref) links that could not be resolved
+     * immediately while walking the payload (forward references -- the
+     * referenced resource is declared later in the same payload). Everything
+     * -- every entity's save, and the pending-link drain -- runs inside a
+     * single DB transaction: an unresolved '$ref' rolls back the whole
+     * batch, not just the resource that referenced it.
+     *
+     * A single write context is shared across every item (it must be: the
+     * ClientReferenceMap that makes '$ref' resolution possible lives on the
+     * context, see Context::getClientReferenceMap()), so this is also how
+     * sibling top-level resources in one bulk POST are able to link to each
+     * other by '$ref'.
+     *
+     * @param Request $request
+     * @param iterable<RESTResource> $inputResources
+     * @param Context $writeContext
+     * @param \Illuminate\Database\Eloquent\Model|null $existingEntity Passed through
+     *        to toEntity() for every item; used by edit()/patch() (a single
+     *        resource updating an existing entity). Leave null for store().
+     * @return \Illuminate\Database\Eloquent\Model[] One entity per input resource, in order.
+     * @throws ClientReferenceException
+     * @throws ResourceValidationException
+     * @throws \Throwable
+     */
+    protected function saveEntitiesWithClientReferences(
+        Request $request,
+        iterable $inputResources,
+        Context $writeContext,
+        $existingEntity = null
+    ): array {
+        return \DB::transaction(function () use ($request, $inputResources, $writeContext, $existingEntity) {
+            $entities = [];
+
+            foreach ($inputResources as $inputResource) {
+                $entity = $this->toEntity($inputResource, $writeContext, $existingEntity);
+                $entity = $this->saveEntity($request, $entity);
+
+                // A top-level resource carrying its own '$ref' becomes resolvable
+                // for any sibling resource in the same payload linking to it (the
+                // equivalent nested-child registration is already wired in charon
+                // itself, see RelationshipValue::childResourceToEntity()).
+                $ref = $inputResource->getClientRef();
+                if ($ref !== null) {
+                    $writeContext->getClientReferenceMap()->register($ref, $entity);
+                }
+
+                $entities[] = $entity;
+            }
+
+            $this->drainClientReferences($writeContext);
+
+            return $entities;
+        });
+    }
+
+    /**
+     * Apply every pending client-reference link recorded while walking the
+     * payload (see ClientReferenceMap::getPendingLinks()): a link whose
+     * target had not been created/registered yet at the time the linking
+     * resource itself was processed. Each is applied through the same
+     * PropertySetter path RelationshipValue::addChildren() uses for links
+     * that resolve immediately (setChild() for a "one" relationship,
+     * addChildren() for a "many" one), then the parent is re-saved so the
+     * link is actually persisted -- it may already have been saved (without
+     * this field set) earlier in the same batch.
+     *
+     * @param Context $context
+     * @return void
+     * @throws ClientReferenceException if any pending ref never resolved.
+     */
+    protected function drainClientReferences(Context $context): void
+    {
+        $map = $context->getClientReferenceMap();
+        $pendingLinks = $map->getPendingLinks();
+
+        if ($pendingLinks === []) {
+            return;
+        }
+
+        $transformer = $this->getResourceTransformer();
+        $propertySetter = $transformer->getPropertySetter();
+
+        foreach ($pendingLinks as $link) {
+            $resolved = $map->resolve($link['ref']);
+            if ($resolved === null) {
+                throw ClientReferenceException::unresolvedRef($link['ref']);
+            }
+
+            /** @var RelationshipField $field */
+            $field = $link['field'];
+            $parent = $link['parent'];
+
+            if ($field->getCardinality() === Cardinality::MANY) {
+                $propertySetter->addChildren($transformer, $parent, $field, [ $resolved ], $context);
+            } else {
+                $propertySetter->setChild($transformer, $parent, $field, $resolved, $context);
+            }
+
+            if ($parent instanceof \Illuminate\Database\Eloquent\Model) {
+                $parent->save();
+            }
+        }
+    }
+
+    /**
+     * The '$ref' -> primary key mapping for every client reference the
+     * request registered, suitable for attaching as response meta ("$refs").
+     * Empty when the request used no client references at all.
+     *
+     * @param Context $context
+     * @return array<string, mixed>
+     */
+    protected function getClientReferenceMapping(Context $context): array
+    {
+        $map = $context->getClientReferenceMap();
+        if (!$map->hasAny()) {
+            return [];
+        }
+
+        $refs = [];
+        foreach ($map->getMapping() as $ref => $entity) {
+            if (is_object($entity) && method_exists($entity, 'getKey')) {
+                $refs[$ref] = $entity->getKey();
+            }
+        }
+
+        return $refs;
     }
 
     /**

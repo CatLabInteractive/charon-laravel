@@ -20,4 +20,9 @@ class Pet extends Model
     {
         return $this->hasMany(Tag::class, 'pet_id');
     }
+
+    public function linkedPet(): BelongsTo
+    {
+        return $this->belongsTo(Pet::class, 'linked_pet_id');
+    }
 }

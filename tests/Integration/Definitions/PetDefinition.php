@@ -37,6 +37,15 @@ class PetDefinition extends ResourceDefinition
                 ->visible(true, true)
                 ->expandable()
                 ->writeable()
+
+            // Self-referencing, link-only relationship: mirrors eukles' WorkflowStep
+            // 'linkWithRole:next' shape (single linkable "one" relationship on the
+            // child's own definition). Used to exercise sibling-to-sibling client
+            // references ('$ref') in bulk writes.
+            ->relationship('linkedPet', PetDefinition::class)
+                ->one()
+                ->visible(true, true)
+                ->linkable()
         ;
     }
 }

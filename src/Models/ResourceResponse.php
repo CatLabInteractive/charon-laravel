@@ -34,6 +34,13 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
     private $context;
 
     /**
+     * Extra top-level meta entries (e.g. "$refs") to merge into the encoded
+     * body on top of whatever the wrapped resource/collection serializes.
+     * @var array
+     */
+    private array $meta = [];
+
+    /**
      * ResourceResponse constructor.
      * @param SerializableResource $resource
      * @param Context $context
@@ -108,7 +115,23 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
      */
     public function toArray()
     {
-        return $this->resource->toArray();
+        $data = $this->resource->toArray();
+
+        if ($this->meta !== [] && is_array($data)) {
+            $data['meta'] = array_merge($data['meta'] ?? [], $this->meta);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param array $meta
+     * @return static
+     */
+    public function setMeta(array $meta): static
+    {
+        $this->meta = $meta;
+        return $this;
     }
 
     /**
