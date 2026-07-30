@@ -74,6 +74,14 @@ abstract class IntegrationTestCase extends OrchestraTestCase
             $table->foreignId('tag_id')->constrained('tags')->onDelete('cascade');
             $table->timestamps();
         });
+
+        // Self-referencing many-to-many pivot backing PetDefinition::relatedPets,
+        // used to exercise the Cardinality::MANY client-reference drain branch
+        // (PropertySetter::addChildren() -> BelongsToMany::attach()).
+        Schema::create('related_pets', function (Blueprint $table) {
+            $table->unsignedBigInteger('pet_id');
+            $table->unsignedBigInteger('related_pet_id');
+        });
     }
 
     private function dropTables()
@@ -81,6 +89,7 @@ abstract class IntegrationTestCase extends OrchestraTestCase
         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('tag_metadata');
         Schema::dropIfExists('tags');
+        Schema::dropIfExists('related_pets');
         Schema::dropIfExists('pets');
         Schema::dropIfExists('stores');
         Schema::enableForeignKeyConstraints();

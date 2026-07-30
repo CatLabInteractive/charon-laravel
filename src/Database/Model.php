@@ -226,6 +226,16 @@ class Model extends \Illuminate\Database\Eloquent\Model
         foreach ($toReload as $reload) {
             unset($this->relations[$reload]);
         }
+
+        // Clear the buffers once they've been persisted, so a second
+        // saveRecursively() call on the same instance (e.g. CrudController's
+        // client-reference drain re-saving a parent that was already saved
+        // once earlier in the same batch, without a since-then-resolved
+        // relationship) only processes children queued since the last save,
+        // instead of re-attaching/re-saving everything all over again.
+        $this->addedChildren = [];
+        $this->removedChildren = [];
+        $this->editedChildren = [];
     }
 
     /**

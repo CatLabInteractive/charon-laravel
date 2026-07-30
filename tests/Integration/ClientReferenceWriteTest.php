@@ -121,4 +121,43 @@ class ClientReferenceWriteTest extends IntegrationTestCase
 
         $this->assertEquals(0, Pet::count());
     }
+
+    /**
+     * Same forward-reference shape as testForwardReferenceResolvesInDeferredPass,
+     * but through PetDefinition's "many" self-referencing 'relatedPets'
+     * relationship (a linkable, non-writeable BelongsToMany) instead of the
+     * "one" 'linkedPet' -- exercises the Cardinality::MANY branch of
+     * CrudController::drainClientReferences() (PropertySetter::addChildren(),
+     * not setChild()), and the fact that applying it must actually persist
+     * the BelongsToMany pivot row: addChildren() on a Laravel Model only
+     * buffers the child in memory (Model::addChildrenToEntity()) until
+     * saveRecursively() -> saveTheChildren() runs.
+     */
+    public function testForwardReferenceResolvesInDeferredPassForManyRelationship()
+    {
+        $response = $this->postJson('/api/pets', [
+            'items' => [
+                [ 'name' => 'Rex', 'relatedPets' => [ 'items' => [ [ '$ref' => 'tmp-b' ] ] ] ],
+                [ '$ref' => 'tmp-b', 'name' => 'Buddy' ],
+            ],
+        ]);
+
+        $response->assertStatus(201);
+
+        $buddy = Pet::where('name', 'Buddy')->first();
+        $rex = Pet::where('name', 'Rex')->first();
+
+        $this->assertNotNull($buddy);
+        $this->assertNotNull($rex);
+
+        // Re-fetch: relatedPets is a relation, not an attribute -- assert against
+        // the persisted pivot row, not anything still held on the in-memory $rex.
+        $persistedRelatedPetIds = Pet::find($rex->id)->relatedPets()->pluck('pets.id')->all();
+        $this->assertEquals([ $buddy->id ], $persistedRelatedPetIds);
+
+        $this->assertDatabaseHas('related_pets', [
+            'pet_id' => $rex->id,
+            'related_pet_id' => $buddy->id,
+        ]);
+    }
 }

@@ -4,6 +4,7 @@ namespace Tests\Integration\Models;
 
 use CatLab\Charon\Laravel\Database\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pet extends Model
@@ -24,5 +25,10 @@ class Pet extends Model
     public function linkedPet(): BelongsTo
     {
         return $this->belongsTo(Pet::class, 'linked_pet_id');
+    }
+
+    public function relatedPets(): BelongsToMany
+    {
+        return $this->belongsToMany(Pet::class, 'related_pets', 'pet_id', 'related_pet_id');
     }
 }

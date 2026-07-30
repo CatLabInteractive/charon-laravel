@@ -530,7 +530,17 @@ trait CrudController
                 $propertySetter->setChild($transformer, $parent, $field, $resolved, $context);
             }
 
-            if ($parent instanceof \Illuminate\Database\Eloquent\Model) {
+            // addChildren() on a "many" field only buffers the child on the
+            // parent (Model::addChildrenToEntity()) -- it's saveRecursively()
+            // (via Model::saveTheChildren()) that actually persists the
+            // relation (e.g. attach()ing a BelongsToMany pivot row). setChild()
+            // on a "one" field sets a plain attribute instead, which a bare
+            // save() already covers, but saveRecursively() covers that too
+            // (it calls save() first), so use it unconditionally for any
+            // parent capable of it.
+            if ($parent instanceof Model) {
+                $parent->saveRecursively();
+            } elseif ($parent instanceof \Illuminate\Database\Eloquent\Model) {
                 $parent->save();
             }
         }

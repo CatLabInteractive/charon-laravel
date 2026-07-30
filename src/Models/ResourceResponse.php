@@ -135,6 +135,18 @@ class ResourceResponse extends Response implements \CatLab\Charon\Laravel\Contra
     }
 
     /**
+     * The extra top-level meta entries set via setMeta(), if any. Exposed
+     * (not just merged in toArray()) so subclasses that build their own
+     * output shape instead of calling toArray()/encode() -- e.g.
+     * JsonApiResponse::toJsonApi() -- can merge it into their own output too.
+     * @return array
+     */
+    protected function getMeta(): array
+    {
+        return $this->meta;
+    }
+
+    /**
      * @return string
      */
     protected function encode()

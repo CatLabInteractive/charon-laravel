@@ -46,6 +46,15 @@ class PetDefinition extends ResourceDefinition
                 ->one()
                 ->visible(true, true)
                 ->linkable()
+
+            // Same shape, "many" cardinality: a self-referencing, link-only
+            // many-to-many relationship, used to exercise the
+            // Cardinality::MANY client-reference drain branch
+            // (PropertySetter::addChildren() -> BelongsToMany pivot).
+            ->relationship('relatedPets', PetDefinition::class)
+                ->many()
+                ->visible(true, true)
+                ->linkable()
         ;
     }
 }

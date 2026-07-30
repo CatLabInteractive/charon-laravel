@@ -106,6 +106,13 @@ class JsonApiResponse extends ResourceResponse
      */
     protected function addResources($resource)
     {
+        // Extra top-level meta set on the response itself (e.g. "$refs" from
+        // CrudController::getClientReferenceMapping(), see ResourceResponse::
+        // setMeta()) -- merged with whatever the resource/collection carries
+        // as its own meta. On a key conflict, the resource's own meta wins:
+        // it was set closer to (and more specifically than) the generic
+        // response-level meta, the same precedence ResourceResponse::toArray()
+        // uses for the non-JSON:API response shape.
         if ($resource instanceof ResourceCollection) {
 
             foreach ($resource as $r) {
@@ -113,13 +120,13 @@ class JsonApiResponse extends ResourceResponse
                 $this->touchIncluded($r);
                 $this->output['data'][] = $this->encodeResource($r);
             }
-            $this->output['meta'] = $resource->getMeta();
+            $this->output['meta'] = array_merge($this->getMeta(), $resource->getMeta());
 
         } else {
             /** @var RESTResource $resource */
             $this->touchIncluded($resource);
             $this->output['data'] = $this->encodeResource($resource);
-            //$this->output['meta'] = $resource->getMeta();
+            $this->output['meta'] = $this->getMeta();
         }
     }
 
