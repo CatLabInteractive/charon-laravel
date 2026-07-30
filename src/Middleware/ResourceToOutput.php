@@ -50,7 +50,14 @@ class ResourceToOutput
      */
     protected function toJSON(ResourceResponse $response)
     {
-        return \Response::json($response->getResource()->toArray(), $response->getStatusCode());
+        // Route through the response's own toArray(), not the underlying
+        // resource's: ResourceResponse::toArray() merges in response-level
+        // meta (eg. the client-reference "$refs" map set via setMeta() -
+        // see CrudController::saveEntitiesWithClientReferences()), which
+        // $response->getResource()->toArray() has no knowledge of at all.
+        // Calling getResource()->toArray() directly silently dropped that
+        // meta for every plain (non-JSON:API) response.
+        return \Response::json($response->toArray(), $response->getStatusCode());
     }
 
     /**
