@@ -162,6 +162,24 @@ class PropertySetter extends \CatLab\Charon\Resolvers\PropertySetter
     }
 
     /**
+     * On top of an edit<Name>() method, this setter can edit the children of
+     * any CatLab\Charon\Laravel\Database\Model, which queues them and applies
+     * them on save. A plain Illuminate\Database\Eloquent\Model cannot - that
+     * is the case worth catching, since it is the default an application
+     * reaches for.
+     *
+     * @inheritDoc
+     */
+    public function supportsChildEditing(string $entityClassName, string $childFieldName): bool
+    {
+        if (is_a($entityClassName, Model::class, true)) {
+            return true;
+        }
+
+        return parent::supportsChildEditing($entityClassName, $childFieldName);
+    }
+
+    /**
      * @param ResourceTransformer $transformer
      * @param PropertyResolverContract $propertyResolver
      * @param $entity
