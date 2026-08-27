@@ -3,8 +3,6 @@
 namespace Tests\Integration;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use Tests\Integration\Controllers\PetController;
 use Tests\Integration\Controllers\PetTagController;
@@ -29,70 +27,18 @@ abstract class IntegrationTestCase extends OrchestraTestCase
         ]);
     }
 
+    /**
+     * The schema lives in a real migration (tests/Integration/migrations) so
+     * that RefreshDatabase's migrate step creates it before the per-test
+     * transaction is opened. Creating tables from a later hook such as
+     * afterRefreshingDatabase() breaks on MySQL: DDL implicitly commits, which
+     * ends the transaction RefreshDatabase just started and makes any
+     * DB::transaction() rollback inside a request fail with
+     * "SAVEPOINT trans2 does not exist". SQLite's transactional DDL hides that.
+     */
     protected function defineDatabaseMigrations()
     {
-        $this->beforeApplicationDestroyed(function () {
-            $this->dropTables();
-        });
-    }
-
-    protected function afterRefreshingDatabase()
-    {
-        $this->dropTables();
-
-        Schema::create('stores', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('address')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('pets', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('status')->nullable();
-            $table->foreignId('store_id')->nullable()->constrained('stores')->onDelete('cascade');
-            // Self-referencing linkable relationship (PetDefinition::linkedPet), used to
-            // exercise sibling-to-sibling client references ('$ref') in bulk writes. No
-            // FK constraint: the referenced pet may not exist yet when this row is first
-            // inserted (forward reference within the same batch).
-            $table->unsignedBigInteger('linked_pet_id')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('tags', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->foreignId('pet_id')->constrained('pets')->onDelete('cascade');
-            $table->timestamps();
-        });
-
-        Schema::create('tag_metadata', function (Blueprint $table) {
-            $table->id();
-            $table->string('key');
-            $table->string('value')->nullable();
-            $table->foreignId('tag_id')->constrained('tags')->onDelete('cascade');
-            $table->timestamps();
-        });
-
-        // Self-referencing many-to-many pivot backing PetDefinition::relatedPets,
-        // used to exercise the Cardinality::MANY client-reference drain branch
-        // (PropertySetter::addChildren() -> BelongsToMany::attach()).
-        Schema::create('related_pets', function (Blueprint $table) {
-            $table->unsignedBigInteger('pet_id');
-            $table->unsignedBigInteger('related_pet_id');
-        });
-    }
-
-    private function dropTables()
-    {
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('tag_metadata');
-        Schema::dropIfExists('tags');
-        Schema::dropIfExists('related_pets');
-        Schema::dropIfExists('pets');
-        Schema::dropIfExists('stores');
-        Schema::enableForeignKeyConstraints();
+        $this->loadMigrationsFrom(__DIR__ . '/migrations');
     }
 
     protected function defineRoutes($router)
