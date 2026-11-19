@@ -23,6 +23,7 @@ class PetDefinition extends ResourceDefinition
 
             ->field('status')
                 ->string()
+                ->filterable()
                 ->writeable()
                 ->visible(true, true)
 
