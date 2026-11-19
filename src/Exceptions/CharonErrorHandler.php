@@ -3,6 +3,7 @@
 
 namespace CatLab\Charon\Laravel\Exceptions;
 
+use CatLab\Charon\Exceptions\InvalidFilterException;
 use CatLab\Charon\Exceptions\CharonException;
 use CatLab\Charon\Exceptions\InputDecodeException;
 use CatLab\Charon\Exceptions\NoInputDataFound;
@@ -63,6 +64,14 @@ class CharonErrorHandler
             case $exception instanceof InputDecodeException:
                 return $this->jsonApiErrorResponse(
                     $exception->getErrorMessage(),
+                    null,
+                    [],
+                    400
+                );
+
+            case $exception instanceof InvalidFilterException:
+                return $this->jsonApiErrorResponse(
+                    $exception->getMessage(),
                     null,
                     [],
                     400

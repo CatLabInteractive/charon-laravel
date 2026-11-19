@@ -23,6 +23,7 @@ class StoreDefinition extends ResourceDefinition
 
             ->field('address')
                 ->string()
+                ->filterable()
                 ->writeable()
                 ->visible(true, true)
 

@@ -10,6 +10,14 @@ class Store extends Model
     protected $table = 'stores';
     protected $guarded = [];
 
+    /**
+     * An entity filter method that ignores the operator (only meant for "=").
+     */
+    public static function filterAddress($query, $value, $operator)
+    {
+        $query->where('address', 'LIKE', $value . '%');
+    }
+
     public function pets(): HasMany
     {
         return $this->hasMany(Pet::class, 'store_id');

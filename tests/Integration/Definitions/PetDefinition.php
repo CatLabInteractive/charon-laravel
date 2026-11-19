@@ -17,6 +17,7 @@ class PetDefinition extends ResourceDefinition
 
             ->field('name')
                 ->string()
+                ->searchable()
                 ->required()
                 ->writeable()
                 ->visible(true, true)
