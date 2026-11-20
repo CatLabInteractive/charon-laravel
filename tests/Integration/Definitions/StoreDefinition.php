@@ -17,6 +17,7 @@ class StoreDefinition extends ResourceDefinition
 
             ->field('name')
                 ->string()
+                ->filterable()
                 ->required()
                 ->writeable()
                 ->visible(true, true)

@@ -121,4 +121,20 @@ class FilterOperatorTest extends IntegrationTestCase
         $this->expectException(InvalidFilterException::class);
         $this->getJson('/api/stores?address[neq]=123');
     }
+
+    public function testAnEntityFilterMethodThatTakesAConditionFilterGetsEveryCondition()
+    {
+        $this->seedTestData();
+        \Tests\Integration\Models\Store::$receivedNameFilters = [];
+
+        $this->assertSame(['Animal Kingdom'], $this->names('/api/stores?name[neq]=' . urlencode('Pet Paradise')));
+        $this->assertSame(['Animal Kingdom', 'Pet Paradise'], $this->names('/api/stores?name[not_empty]=1'));
+        $this->assertSame(['Pet Paradise'], $this->names('/api/stores?name=' . urlencode('Pet Paradise')));
+
+        $received = \Tests\Integration\Models\Store::$receivedNameFilters;
+        $this->assertCount(3, $received);
+        $this->assertSame('!=', $received[0]->getOperator());
+        $this->assertSame('Pet Paradise', $received[0]->getValue());
+        $this->assertFalse($received[1]->takesValue());
+    }
 }
