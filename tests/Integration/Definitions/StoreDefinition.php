@@ -17,12 +17,14 @@ class StoreDefinition extends ResourceDefinition
 
             ->field('name')
                 ->string()
+                ->filterable()
                 ->required()
                 ->writeable()
                 ->visible(true, true)
 
             ->field('address')
                 ->string()
+                ->filterable()
                 ->writeable()
                 ->visible(true, true)
 

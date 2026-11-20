@@ -17,12 +17,14 @@ class PetDefinition extends ResourceDefinition
 
             ->field('name')
                 ->string()
+                ->searchable()
                 ->required()
                 ->writeable()
                 ->visible(true, true)
 
             ->field('status')
                 ->string()
+                ->filterable()
                 ->writeable()
                 ->visible(true, true)
 

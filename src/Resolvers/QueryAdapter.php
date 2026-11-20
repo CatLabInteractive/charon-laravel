@@ -3,6 +3,8 @@
 namespace CatLab\Charon\Laravel\Resolvers;
 
 use CatLab\Base\Enum\Operator;
+use CatLab\Charon\Enums\FilterOperator;
+use CatLab\Requirements\Enums\PropertyType;
 use CatLab\Charon\Collections\PropertyValueCollection;
 use CatLab\Charon\Exceptions\InvalidPropertyException;
 use CatLab\Charon\Interfaces\Context;
@@ -97,9 +99,61 @@ class QueryAdapter extends \CatLab\Charon\Resolvers\QueryAdapter
         $queryBuilder = $this->checkValidQueryBuilder($queryBuilder);
 
         if ($operator === Operator::SEARCH) {
-            $queryBuilder->where($this->getQualifiedName($field), 'LIKE', '%' . $value . '%');
+            $this->applyContainsWhere($field, $queryBuilder, (string) $value);
+        } elseif ($operator === Operator::NEQ) {
+            // "is not X" includes the rows without a value; SQL's != alone leaves them out.
+            $column = $this->getQualifiedName($field);
+            $queryBuilder->where(function ($query) use ($column, $value) {
+                $query->where($column, '!=', $value)->orWhereNull($column);
+            });
+        } elseif ($operator === FilterOperator::EMPTY || $operator === FilterOperator::NOT_EMPTY) {
+            $this->applyEmptyWhere($field, $queryBuilder, $operator === FilterOperator::EMPTY);
         } else {
             $queryBuilder->where($this->getQualifiedName($field), $operator, $value);
+        }
+    }
+
+    /**
+     * LIKE '%value%' with the wildcards in the value escaped, so "50%" and
+     * "a_b" are matched literally. '!' is the escape character because a
+     * backslash means something different in MySQL and SQLite string literals.
+     * @param Field $field
+     * @param Builder|Relation $queryBuilder
+     * @param string $value
+     */
+    protected function applyContainsWhere(Field $field, $queryBuilder, string $value)
+    {
+        $escaped = str_replace([ '!', '%', '_' ], [ '!!', '!%', '!_' ], $value);
+        $column = $queryBuilder->getQuery()->getGrammar()->wrap($this->getQualifiedName($field));
+
+        $queryBuilder->whereRaw($column . " LIKE ? ESCAPE '!'", [ '%' . $escaped . '%' ]);
+    }
+
+    /**
+     * Empty is null, and for text fields also an empty string (comparing a
+     * number or date with '' would match 0 or fail on strict databases).
+     * @param Field $field
+     * @param Builder|Relation $queryBuilder
+     * @param bool $empty true for FilterOperator::EMPTY, false for NOT_EMPTY
+     */
+    protected function applyEmptyWhere(Field $field, $queryBuilder, bool $empty)
+    {
+        $column = $this->getQualifiedName($field);
+        $isText = in_array($field->getType(), [ PropertyType::STRING, PropertyType::HTML ], true);
+
+        if ($empty) {
+            $queryBuilder->where(function ($query) use ($column, $isText) {
+                $query->whereNull($column);
+                if ($isText) {
+                    $query->orWhere($column, '=', '');
+                }
+            });
+            return;
+        }
+
+        $queryBuilder->whereNotNull($column);
+        if ($isText) {
+            $queryBuilder->where($column, '!=', '');
         }
     }
 
